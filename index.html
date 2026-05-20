@@ -6,1197 +6,1353 @@
 <title>The ZFutures Transformation Framework</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a08;--bg2:#111110;--bg3:#1a1a17;--bg4:#222220;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--border3:rgba(255,255,255,0.2);
+  --text:#f0ede6;--muted:#888880;--faint:#555550;
+  --accent:#c8f060;--accent2:#e8f5a0;--accent-dim:rgba(200,240,96,0.1);
+  --s1:#4a9eff;--s2:#a78bfa;--s3:#34d399;--s4:#fb923c;
+  --fd:'DM Serif Display',Georgia,serif;--fb:'DM Sans',system-ui,sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:16px;line-height:1.65;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.5}
 
-  :root {
-    --bg: #0a0a08;
-    --bg2: #111110;
-    --bg3: #1a1a17;
-    --border: rgba(255,255,255,0.08);
-    --border2: rgba(255,255,255,0.14);
-    --text: #f0ede6;
-    --muted: #888880;
-    --accent: #c8f060;
-    --accent2: #e8f5a0;
-    --stage1: #4a9eff;
-    --stage2: #a78bfa;
-    --stage3: #34d399;
-    --stage4: #fb923c;
-    --font-display: 'DM Serif Display', Georgia, serif;
-    --font-body: 'DM Sans', system-ui, sans-serif;
-  }
+/* LAYOUT */
+.wrap{max-width:860px;margin:0 auto;padding:0 2rem;position:relative;z-index:1}
+.wrap-wide{max-width:1040px;margin:0 auto;padding:0 2rem;position:relative;z-index:1}
 
-  html { scroll-behavior: smooth; }
+/* NAV */
+nav{padding:1.4rem 0;border-bottom:.5px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.nav-brand{font-family:var(--fd);font-size:1.05rem;letter-spacing:.02em}
+.nav-brand span{color:var(--accent)}
+.nav-right{display:flex;align-items:center;gap:1rem}
+.nav-tag{font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border:.5px solid var(--border2);padding:4px 10px;border-radius:20px}
+.nav-cta{font-size:12px;font-weight:500;color:var(--accent);text-decoration:none;border:.5px solid rgba(200,240,96,.3);padding:5px 14px;border-radius:20px;transition:background .15s}
+.nav-cta:hover{background:var(--accent-dim)}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font-body);
-    font-size: 16px;
-    line-height: 1.6;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+/* SIDEBAR NAV */
+.page-layout{display:grid;grid-template-columns:220px 1fr;gap:4rem;align-items:start;padding-top:3rem}
+.sidebar{position:sticky;top:2rem}
+.sidebar-label{font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:1rem}
+.sidebar-nav{list-style:none;display:flex;flex-direction:column;gap:2px}
+.sidebar-nav a{display:block;font-size:13px;color:var(--muted);text-decoration:none;padding:5px 10px;border-radius:5px;border-left:2px solid transparent;transition:color .15s,border-color .15s,background .15s;line-height:1.4}
+.sidebar-nav a:hover{color:var(--text);background:var(--bg2)}
+.sidebar-nav a.active{color:var(--accent);border-left-color:var(--accent);background:var(--accent-dim)}
+.sidebar-nav .nav-section{font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);padding:8px 10px 3px;margin-top:.5rem}
 
-  /* grain overlay */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 0;
-    opacity: 0.4;
-  }
+/* HERO */
+.hero{padding:5rem 0 4rem;border-bottom:.5px solid var(--border)}
+.hero-eyebrow{font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:1.5rem;display:flex;align-items:center;gap:8px}
+.hero-eyebrow::before{content:'';display:inline-block;width:24px;height:1px;background:var(--accent)}
+.hero h1{font-family:var(--fd);font-size:clamp(2.6rem,5.5vw,4rem);line-height:1.05;letter-spacing:-.02em;margin-bottom:1.5rem;max-width:680px}
+.hero h1 em{font-style:italic;color:var(--accent)}
+.hero-lead{font-size:1.1rem;color:var(--muted);max-width:560px;line-height:1.75;margin-bottom:2.5rem}
+.hero-stats{display:flex;gap:2.5rem;flex-wrap:wrap;padding-top:1.5rem;border-top:.5px solid var(--border)}
+.stat strong{display:block;font-family:var(--fd);font-size:1.8rem;color:var(--text)}
+.stat span{font-size:12px;color:var(--muted);letter-spacing:.02em}
 
-  .container { max-width: 900px; margin: 0 auto; padding: 0 2rem; position: relative; z-index: 1; }
+/* SECTION COMMONS */
+section{padding:4rem 0;border-bottom:.5px solid var(--border)}
+.sec-eyebrow{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:.75rem;display:flex;align-items:center;gap:8px}
+.sec-eyebrow::before{content:'';display:inline-block;width(18px);height:1px;background:var(--accent)}
+.sec-title{font-family:var(--fd);font-size:clamp(1.7rem,3vw,2.4rem);line-height:1.1;margin-bottom:1rem}
+.sec-title em{font-style:italic;color:var(--accent)}
+.sec-lead{color:var(--muted);font-size:.98rem;line-height:1.75;max-width:580px;margin-bottom:2.5rem}
 
-  /* NAV */
-  nav {
-    padding: 1.5rem 0;
-    border-bottom: 0.5px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .nav-brand { font-family: var(--font-display); font-size: 1.1rem; letter-spacing: 0.02em; }
-  .nav-brand span { color: var(--accent); }
-  .nav-tag {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    border: 0.5px solid var(--border2);
-    padding: 4px 10px;
-    border-radius: 20px;
-  }
+/* PRINCIPLES */
+.principles-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:2rem}
+.principle{background:var(--bg2);padding:1.75rem;transition:background .2s}
+.principle:hover{background:var(--bg3)}
+.p-num{font-family:var(--fd);font-size:2rem;color:var(--accent);opacity:.3;margin-bottom:.5rem;line-height:1}
+.p-title{font-size:15px;font-weight:500;margin-bottom:.5rem}
+.p-body{font-size:13px;color:var(--muted);line-height:1.6}
 
-  /* HERO */
-  .hero {
-    padding: 6rem 0 4rem;
-    border-bottom: 0.5px solid var(--border);
-  }
-  .hero-eyebrow {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .hero-eyebrow::before {
-    content: '';
-    display: inline-block;
-    width: 24px;
-    height: 1px;
-    background: var(--accent);
-  }
-  .hero h1 {
-    font-family: var(--font-display);
-    font-size: clamp(2.4rem, 5vw, 3.6rem);
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-    margin-bottom: 1.5rem;
-    max-width: 620px;
-  }
-  .hero h1 em { font-style: italic; color: var(--accent); }
-  .hero-desc {
-    font-size: 1.05rem;
-    color: var(--muted);
-    max-width: 520px;
-    line-height: 1.7;
-    margin-bottom: 2.5rem;
-  }
-  .hero-meta {
-    display: flex;
-    gap: 2rem;
-    flex-wrap: wrap;
-  }
-  .meta-item { font-size: 13px; color: var(--muted); }
-  .meta-item strong { color: var(--text); display: block; font-size: 1.1rem; font-weight: 500; }
+/* STAGE CARDS */
+.stages-overview{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:3rem}
+.stage-card{background:var(--bg2);padding:1.5rem;cursor:pointer;transition:background .2s}
+.stage-card:hover{background:var(--bg3)}
+.sc-num{font-family:var(--fd);font-size:2.2rem;line-height:1;margin-bottom:.6rem}
+.stage-card[data-s="1"] .sc-num{color:var(--s1)}
+.stage-card[data-s="2"] .sc-num{color:var(--s2)}
+.stage-card[data-s="3"] .sc-num{color:var(--s3)}
+.stage-card[data-s="4"] .sc-num{color:var(--s4)}
+.sc-label{font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.3rem}
+.stage-card[data-s="1"] .sc-label{color:var(--s1)}
+.stage-card[data-s="2"] .sc-label{color:var(--s2)}
+.stage-card[data-s="3"] .sc-label{color:var(--s3)}
+.stage-card[data-s="4"] .sc-label{color:var(--s4)}
+.sc-name{font-size:15px;font-weight:500;margin-bottom:.3rem}
+.sc-tag{font-size:12px;color:var(--muted);line-height:1.4}
 
-  /* STAGE SELECTOR */
-  .stage-nav {
-    padding: 3rem 0 0;
-    position: sticky;
-    top: 0;
-    background: var(--bg);
-    z-index: 10;
-    border-bottom: 0.5px solid var(--border);
-  }
-  .stage-tabs {
-    display: flex;
-    gap: 0;
-    overflow-x: auto;
-    scrollbar-width: none;
-    padding-bottom: 0;
-  }
-  .stage-tabs::-webkit-scrollbar { display: none; }
-  .stage-tab {
-    flex-shrink: 0;
-    padding: 1rem 1.5rem;
-    cursor: pointer;
-    border: none;
-    background: none;
-    color: var(--muted);
-    font-family: var(--font-body);
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-    border-bottom: 2px solid transparent;
-    transition: color 0.2s, border-color 0.2s;
-    white-space: nowrap;
-    position: relative;
-    top: 1px;
-  }
-  .stage-tab:hover { color: var(--text); }
-  .stage-tab.active { color: var(--text); }
-  .stage-tab[data-stage="1"].active { border-bottom-color: var(--stage1); color: var(--stage1); }
-  .stage-tab[data-stage="2"].active { border-bottom-color: var(--stage2); color: var(--stage2); }
-  .stage-tab[data-stage="3"].active { border-bottom-color: var(--stage3); color: var(--stage3); }
-  .stage-tab[data-stage="4"].active { border-bottom-color: var(--stage4); color: var(--stage4); }
+/* STAGE DEEP DIVES */
+.stage-deep{margin-bottom:4rem;padding-bottom:4rem;border-bottom:.5px solid var(--border)}
+.stage-deep:last-child{border-bottom:none}
+.sd-header{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;margin-bottom:2.5rem;align-items:start}
+.sd-eyebrow{font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.6rem}
+.stage-deep[data-s="1"] .sd-eyebrow{color:var(--s1)}
+.stage-deep[data-s="2"] .sd-eyebrow{color:var(--s2)}
+.stage-deep[data-s="3"] .sd-eyebrow{color:var(--s3)}
+.stage-deep[data-s="4"] .sd-eyebrow{color:var(--s4)}
+.sd-title{font-family:var(--fd);font-size:1.9rem;line-height:1.1;margin-bottom:.75rem}
+.stage-deep[data-s="1"] .sd-title em{color:var(--s1)}
+.stage-deep[data-s="2"] .sd-title em{color:var(--s2)}
+.stage-deep[data-s="3"] .sd-title em{color:var(--s3)}
+.stage-deep[data-s="4"] .sd-title em{color:var(--s4)}
+.sd-desc{font-size:.93rem;color:var(--muted);line-height:1.7}
+.sd-box{background:var(--bg2);border:.5px solid var(--border);border-radius:10px;padding:1.4rem}
+.sd-box-label{font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.9rem}
+.check-list{list-style:none;display:flex;flex-direction:column;gap:.55rem}
+.check-list li{font-size:13px;display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+.check-list li .ck{flex-shrink:0;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-top:2px;font-size:9px}
+.stage-deep[data-s="1"] .ck{background:rgba(74,158,255,.15);color:var(--s1)}
+.stage-deep[data-s="2"] .ck{background:rgba(167,139,250,.15);color:var(--s2)}
+.stage-deep[data-s="3"] .ck{background:rgba(52,211,153,.15);color:var(--s3)}
+.stage-deep[data-s="4"] .ck{background:rgba(251,146,60,.15);color:var(--s4)}
 
-  /* OVERVIEW RAIL */
-  .overview {
-    padding: 4rem 0;
-    border-bottom: 0.5px solid var(--border);
-  }
-  .overview-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1px;
-    background: var(--border);
-    border: 0.5px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-  }
-  .overview-cell {
-    background: var(--bg2);
-    padding: 1.5rem;
-    cursor: pointer;
-    transition: background 0.2s;
-    position: relative;
-  }
-  .overview-cell:hover { background: var(--bg3); }
-  .overview-cell.active { background: var(--bg3); }
-  .cell-num {
-    font-family: var(--font-display);
-    font-size: 2.5rem;
-    line-height: 1;
-    margin-bottom: 0.75rem;
-    opacity: 0.15;
-  }
-  .overview-cell[data-stage="1"] .cell-num { color: var(--stage1); opacity: 1; }
-  .overview-cell[data-stage="2"] .cell-num { color: var(--stage2); opacity: 1; }
-  .overview-cell[data-stage="3"] .cell-num { color: var(--stage3); opacity: 1; }
-  .overview-cell[data-stage="4"] .cell-num { color: var(--stage4); opacity: 1; }
-  .cell-label {
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    margin-bottom: 0.4rem;
-  }
-  .overview-cell[data-stage="1"] .cell-label { color: var(--stage1); }
-  .overview-cell[data-stage="2"] .cell-label { color: var(--stage2); }
-  .overview-cell[data-stage="3"] .cell-label { color: var(--stage3); }
-  .overview-cell[data-stage="4"] .cell-label { color: var(--stage4); }
-  .cell-name { font-size: 14px; color: var(--text); font-weight: 500; margin-bottom: 0.3rem; }
-  .cell-tagline { font-size: 12px; color: var(--muted); line-height: 1.4; }
-  .cell-arrow {
-    position: absolute;
-    bottom: 1rem;
-    right: 1rem;
-    font-size: 16px;
-    color: var(--muted);
-    transition: transform 0.2s, color 0.2s;
-  }
-  .overview-cell:hover .cell-arrow,
-  .overview-cell.active .cell-arrow { transform: translateX(3px); }
-  .overview-cell[data-stage="1"]:hover .cell-arrow,
-  .overview-cell[data-stage="1"].active .cell-arrow { color: var(--stage1); }
-  .overview-cell[data-stage="2"]:hover .cell-arrow,
-  .overview-cell[data-stage="2"].active .cell-arrow { color: var(--stage2); }
-  .overview-cell[data-stage="3"]:hover .cell-arrow,
-  .overview-cell[data-stage="3"].active .cell-arrow { color: var(--stage3); }
-  .overview-cell[data-stage="4"]:hover .cell-arrow,
-  .overview-cell[data-stage="4"].active .cell-arrow { color: var(--stage4); }
+/* SUB-SECTIONS */
+.subsection{margin-bottom:2rem}
+.sub-title{font-size:13px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem;padding-bottom:.5rem;border-bottom:.5px solid var(--border)}
+.builds-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1.5rem}
+.build-card{background:var(--bg2);border:.5px solid var(--border);border-radius:9px;padding:1.1rem;transition:background .2s,border-color .2s}
+.build-card:hover{background:var(--bg3);border-color:var(--border2)}
+.bc-icon{font-size:1.2rem;margin-bottom:.6rem}
+.bc-title{font-size:13px;font-weight:500;margin-bottom:.3rem}
+.bc-desc{font-size:12px;color:var(--muted);line-height:1.55}
 
-  /* DETAIL PANEL */
-  .stage-detail {
-    padding: 4rem 0;
-    border-bottom: 0.5px solid var(--border);
-    display: none;
-    animation: fadeUp 0.3s ease;
-  }
-  .stage-detail.visible { display: block; }
+/* TRANSITION CRITERIA */
+.criteria-box{background:var(--bg2);border:.5px solid var(--border);border-radius:10px;padding:1.5rem;margin-bottom:1.5rem}
+.criteria-title{font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;margin-bottom:1rem}
+.stage-deep[data-s="1"] .criteria-title{color:var(--s1)}
+.stage-deep[data-s="2"] .criteria-title{color:var(--s2)}
+.stage-deep[data-s="3"] .criteria-title{color:var(--s3)}
+.stage-deep[data-s="4"] .criteria-title{color:var(--s4)}
+.criteria-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.criteria-item{font-size:12px;color:var(--muted);display:flex;align-items:flex-start;gap:6px;line-height:1.5}
+.criteria-item::before{content:'✓';flex-shrink:0;font-size:10px;margin-top:2px}
+.stage-deep[data-s="1"] .criteria-item::before{color:var(--s1)}
+.stage-deep[data-s="2"] .criteria-item::before{color:var(--s2)}
+.stage-deep[data-s="3"] .criteria-item::before{color:var(--s3)}
+.stage-deep[data-s="4"] .criteria-item::before{color:var(--s4)}
 
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+/* FAILURE MODES */
+.failure-list{list-style:none;display:flex;flex-direction:column;gap:.6rem}
+.failure-list li{font-size:13px;color:var(--muted);display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+.failure-list li::before{content:'⚠';flex-shrink:0;font-size:11px;margin-top:2px;color:#fb923c}
 
-  .detail-header {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 3rem;
-    margin-bottom: 3rem;
-    align-items: start;
-  }
-  .detail-stage-num {
-    font-family: var(--font-display);
-    font-size: 7rem;
-    line-height: 1;
-    opacity: 0.06;
-    position: absolute;
-    top: -1rem;
-    right: 0;
-    pointer-events: none;
-  }
-  .detail-left { position: relative; }
-  .detail-eyebrow {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    margin-bottom: 0.75rem;
-  }
-  .detail-title {
-    font-family: var(--font-display);
-    font-size: 2.2rem;
-    line-height: 1.1;
-    margin-bottom: 1rem;
-  }
-  .detail-subtitle { font-size: 1rem; color: var(--muted); line-height: 1.7; }
+/* TIMELINE */
+.timeline{display:flex;flex-direction:column;gap:0}
+.tl-item{display:grid;grid-template-columns:100px 1fr;gap:1.5rem;padding:1.25rem 0;border-bottom:.5px solid var(--border)}
+.tl-item:last-child{border-bottom:none}
+.tl-time{font-size:12px;color:var(--muted);padding-top:2px;line-height:1.4}
+.tl-content{}
+.tl-title{font-size:14px;font-weight:500;margin-bottom:.3rem}
+.tl-desc{font-size:13px;color:var(--muted);line-height:1.55}
 
-  .detail-right {}
-  .detail-box {
-    background: var(--bg2);
-    border: 0.5px solid var(--border);
-    border-radius: 12px;
-    padding: 1.5rem;
-  }
-  .detail-box-label {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 1rem;
-  }
-  .signal-list { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
-  .signal-list li {
-    font-size: 13px;
-    color: var(--text);
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    line-height: 1.5;
-  }
-  .signal-list li::before {
-    content: '→';
-    flex-shrink: 0;
-    margin-top: 1px;
-    font-size: 12px;
-  }
+/* SECTOR GRID */
+.sector-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}
+.sector-card{background:var(--bg2);border:.5px solid var(--border);border-radius:9px;padding:1.25rem;transition:background .2s}
+.sector-card:hover{background:var(--bg3)}
+.sec-icon{font-size:1.4rem;margin-bottom:.6rem}
+.sec-name{font-size:13px;font-weight:500;margin-bottom:.5rem}
+.sec-stages{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:.6rem}
+.stage-pip{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:500}
+.pip-1{background:rgba(74,158,255,.15);color:var(--s1)}
+.pip-2{background:rgba(167,139,250,.15);color:var(--s2)}
+.pip-3{background:rgba(52,211,153,.15);color:var(--s3)}
+.pip-4{background:rgba(251,146,60,.15);color:var(--s4)}
+.sec-note{font-size:12px;color:var(--muted);line-height:1.5}
 
-  /* BUILDS SECTION */
-  .builds-section { margin-top: 0; }
-  .section-label {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 1.5rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 0.5px solid var(--border);
-  }
-  .builds-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-  }
-  .build-card {
-    background: var(--bg2);
-    border: 0.5px solid var(--border);
-    border-radius: 10px;
-    padding: 1.25rem;
-    transition: border-color 0.2s, background 0.2s;
-  }
-  .build-card:hover { background: var(--bg3); border-color: var(--border2); }
-  .build-icon { font-size: 1.3rem; margin-bottom: 0.75rem; }
-  .build-title { font-size: 14px; font-weight: 500; margin-bottom: 0.35rem; }
-  .build-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+/* PROCESS */
+.process-steps{display:flex;flex-direction:column;gap:0}
+.process-step{display:grid;grid-template-columns:48px 1fr;gap:1.5rem;padding:1.5rem 0;border-bottom:.5px solid var(--border);align-items:start}
+.process-step:last-child{border-bottom:none}
+.ps-num{width:40px;height:40px;border-radius:50%;background:var(--bg3);border:.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:1rem;color:var(--accent);flex-shrink:0}
+.ps-title{font-size:15px;font-weight:500;margin-bottom:.4rem}
+.ps-desc{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:.75rem}
+.ps-deliverables{display:flex;flex-wrap:wrap;gap:.4rem}
+.ps-tag{font-size:11px;background:var(--bg3);border:.5px solid var(--border2);padding:3px 9px;border-radius:5px;color:var(--muted)}
 
-  /* OUTCOME BAR */
-  .outcome-bar {
-    margin-top: 2.5rem;
-    background: var(--bg2);
-    border: 0.5px solid var(--border);
-    border-radius: 10px;
-    padding: 1.25rem 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-  .outcome-icon { font-size: 1.5rem; flex-shrink: 0; }
-  .outcome-text { font-size: 14px; color: var(--muted); line-height: 1.5; }
-  .outcome-text strong { color: var(--text); }
+/* PRINCIPLES OF ENGAGEMENT */
+.poe-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem}
+.poe-card{background:var(--bg2);border:.5px solid var(--border);border-radius:9px;padding:1.25rem}
+.poe-icon{font-size:1.2rem;margin-bottom:.6rem}
+.poe-title{font-size:13px;font-weight:500;margin-bottom:.4rem}
+.poe-body{font-size:12px;color:var(--muted);line-height:1.55}
 
-  /* PROGRESS VISUAL */
-  .progress-section {
-    padding: 4rem 0;
-    border-bottom: 0.5px solid var(--border);
-  }
-  .progress-label {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 2rem;
-  }
-  .progress-track {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    margin-bottom: 1.5rem;
-  }
-  .progress-node {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    flex: 1;
-    cursor: pointer;
-  }
-  .node-circle {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 1.5px solid var(--border2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    font-weight: 500;
-    background: var(--bg2);
-    transition: all 0.2s;
-    color: var(--muted);
-  }
-  .progress-node[data-stage="1"] .node-circle { border-color: var(--stage1); color: var(--stage1); }
-  .progress-node[data-stage="2"] .node-circle { border-color: var(--stage2); color: var(--stage2); }
-  .progress-node[data-stage="3"] .node-circle { border-color: var(--stage3); color: var(--stage3); }
-  .progress-node[data-stage="4"] .node-circle { border-color: var(--stage4); color: var(--stage4); }
-  .progress-node.active[data-stage="1"] .node-circle { background: var(--stage1); color: #0a0a08; }
-  .progress-node.active[data-stage="2"] .node-circle { background: var(--stage2); color: #0a0a08; }
-  .progress-node.active[data-stage="3"] .node-circle { background: var(--stage3); color: #0a0a08; }
-  .progress-node.active[data-stage="4"] .node-circle { background: var(--stage4); color: #0a0a08; }
-  .node-label { font-size: 11px; color: var(--muted); text-align: center; max-width: 80px; line-height: 1.3; }
-  .progress-connector {
-    flex: 0.3;
-    height: 1px;
-    background: var(--border2);
-    margin-bottom: 1.8rem;
-  }
+/* GLOSSARY */
+.glossary-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.gloss-item{background:var(--bg2);border:.5px solid var(--border);border-radius:8px;padding:1rem 1.1rem}
+.gloss-term{font-size:13px;font-weight:500;margin-bottom:.25rem;color:var(--accent)}
+.gloss-def{font-size:12px;color:var(--muted);line-height:1.5}
 
-  /* CTA */
-  .cta-section {
-    padding: 5rem 0;
-    text-align: center;
-  }
-  .cta-section h2 {
-    font-family: var(--font-display);
-    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
-    margin-bottom: 1rem;
-    line-height: 1.15;
-  }
-  .cta-section h2 em { font-style: italic; color: var(--accent); }
-  .cta-section p { color: var(--muted); font-size: 1rem; max-width: 400px; margin: 0 auto 2rem; line-height: 1.7; }
-  .cta-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--accent);
-    color: #0a0a08;
-    font-family: var(--font-body);
-    font-size: 14px;
-    font-weight: 500;
-    padding: 12px 28px;
-    border-radius: 6px;
-    text-decoration: none;
-    border: none;
-    cursor: pointer;
-    transition: background 0.2s, transform 0.1s;
-    letter-spacing: 0.01em;
-  }
-  .cta-btn:hover { background: var(--accent2); transform: translateY(-1px); }
-  .cta-btn:active { transform: translateY(0); }
+/* QUOTE BLOCKS */
+.blockquote{border-left:2px solid var(--accent);padding:.75rem 1.25rem;margin:1.5rem 0;background:var(--accent-dim);border-radius:0 8px 8px 0}
+.blockquote p{font-family:var(--fd);font-size:1.1rem;font-style:italic;line-height:1.5;color:var(--text)}
 
-  /* FOOTER */
-  footer {
-    border-top: 0.5px solid var(--border);
-    padding: 2rem 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 1rem;
-  }
-  .footer-brand { font-family: var(--font-display); font-size: 1rem; }
-  .footer-brand span { color: var(--accent); }
-  footer p { font-size: 12px; color: var(--muted); }
+/* CALLOUT */
+.callout{background:var(--bg2);border:.5px solid var(--border2);border-radius:10px;padding:1.25rem 1.5rem;margin:1.5rem 0;display:flex;gap:1rem;align-items:flex-start}
+.callout-icon{font-size:1.1rem;flex-shrink:0;margin-top:2px}
+.callout-body{font-size:13px;color:var(--muted);line-height:1.6}
+.callout-body strong{color:var(--text)}
 
-  /* QUIZ */
-  .quiz-section {
-    padding: 5rem 0;
-    border-bottom: 0.5px solid var(--border);
-  }
-  .quiz-intro { margin-bottom: 3rem; }
-  .quiz-intro-eyebrow {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .quiz-intro-eyebrow::before { content: ''; display: inline-block; width: 24px; height: 1px; background: var(--accent); }
-  .quiz-intro h2 {
-    font-family: var(--font-display);
-    font-size: clamp(1.8rem, 3.5vw, 2.4rem);
-    line-height: 1.1;
-    margin-bottom: 0.75rem;
-  }
-  .quiz-intro h2 em { font-style: italic; color: var(--accent); }
-  .quiz-intro p { color: var(--muted); font-size: 0.95rem; max-width: 480px; }
+/* QUIZ */
+.quiz-wrap{background:var(--bg2);border:.5px solid var(--border);border-radius:12px;padding:2rem;margin-top:2rem}
+.quiz-progress-bar{height:2px;background:var(--border2);border-radius:2px;margin-bottom:2rem;overflow:hidden}
+.quiz-progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .4s ease;width:0%}
+.quiz-step{display:none;animation:fadeUp .3s ease}
+.quiz-step.active{display:block}
+.quiz-q-num{font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.6rem}
+.quiz-question{font-family:var(--fd);font-size:1.4rem;line-height:1.2;margin-bottom:1.5rem;max-width:560px}
+.quiz-options{display:flex;flex-direction:column;gap:.5rem}
+.quiz-option{display:flex;align-items:flex-start;gap:.9rem;padding:.9rem 1.1rem;background:var(--bg3);border:.5px solid var(--border);border-radius:8px;cursor:pointer;transition:background .15s,border-color .15s;text-align:left}
+.quiz-option:hover{background:var(--bg4);border-color:var(--border2)}
+.quiz-option.selected{border-color:var(--accent);background:var(--accent-dim)}
+.opt-letter{width:22px;height:22px;border-radius:50%;border:.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0;color:var(--muted);transition:background .15s,color .15s}
+.quiz-option.selected .opt-letter{background:var(--accent);color:#0a0a08;border-color:var(--accent)}
+.opt-text{font-size:13px;color:var(--text);line-height:1.5;padding-top:2px}
+.quiz-nav{display:flex;align-items:center;justify-content:space-between;margin-top:1.5rem}
+.quiz-btn-back{background:none;border:.5px solid var(--border2);color:var(--muted);font-family:var(--fb);font-size:12px;padding:8px 18px;border-radius:5px;cursor:pointer;transition:color .15s}
+.quiz-btn-back:hover{color:var(--text)}
+.quiz-btn-next{background:var(--accent);border:none;color:#0a0a08;font-family:var(--fb);font-size:12px;font-weight:500;padding:8px 20px;border-radius:5px;cursor:pointer;opacity:.35;pointer-events:none;transition:background .15s,opacity .15s}
+.quiz-btn-next.enabled{opacity:1;pointer-events:all}
+.quiz-btn-next.enabled:hover{background:var(--accent2)}
+.quiz-result{display:none;animation:fadeUp .4s ease}
+.quiz-result.active{display:block}
+.result-badge{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;padding:4px 12px;border-radius:20px;margin-bottom:1rem;border:.5px solid}
+.result-h{font-family:var(--fd);font-size:1.7rem;line-height:1.1;margin-bottom:.75rem}
+.result-desc{font-size:.93rem;color:var(--muted);line-height:1.7;max-width:500px;margin-bottom:1.5rem}
+.result-cards{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1.5rem}
+.result-card{background:var(--bg3);border:.5px solid var(--border);border-radius:8px;padding:1rem}
+.rc-label{font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.4rem}
+.rc-val{font-size:13px;color:var(--text);line-height:1.5}
+.score-bar-wrap{margin:1rem 0 1.5rem}
+.score-bar-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:.35rem}
+.score-bar{height:5px;background:var(--border2);border-radius:3px;overflow:hidden}
+.score-bar-fill{height:100%;border-radius:3px;transition:width .8s ease}
+.result-actions{display:flex;gap:.75rem;flex-wrap:wrap}
+.btn-primary{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#0a0a08;font-family:var(--fb);font-size:13px;font-weight:500;padding:10px 22px;border-radius:5px;border:none;cursor:pointer;text-decoration:none;transition:background .15s}
+.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{display:inline-flex;align-items:center;gap:6px;background:none;color:var(--muted);font-family:var(--fb);font-size:13px;padding:10px 22px;border-radius:5px;border:.5px solid var(--border2);cursor:pointer;transition:color .15s}
+.btn-secondary:hover{color:var(--text)}
 
-  .quiz-progress-bar {
-    height: 2px;
-    background: var(--border2);
-    border-radius: 2px;
-    margin-bottom: 2.5rem;
-    overflow: hidden;
-  }
-  .quiz-progress-fill {
-    height: 100%;
-    background: var(--accent);
-    border-radius: 2px;
-    transition: width 0.4s ease;
-    width: 0%;
-  }
+/* CTA SECTION */
+.cta-section{padding:5rem 0;text-align:center}
+.cta-section h2{font-family:var(--fd);font-size:clamp(1.8rem,3.5vw,2.6rem);margin-bottom:1rem;line-height:1.15}
+.cta-section h2 em{font-style:italic;color:var(--accent)}
+.cta-section p{color:var(--muted);font-size:.98rem;max-width:420px;margin:0 auto 2rem;line-height:1.7}
 
-  .quiz-step { display: none; animation: fadeUp 0.3s ease; }
-  .quiz-step.active { display: block; }
+/* FOOTER */
+footer{border-top:.5px solid var(--border);padding:2rem 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+.footer-brand{font-family:var(--fd);font-size:1rem}
+.footer-brand span{color:var(--accent)}
+footer p{font-size:12px;color:var(--muted)}
 
-  .quiz-q-num {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 0.75rem;
-  }
-  .quiz-question {
-    font-family: var(--font-display);
-    font-size: 1.5rem;
-    line-height: 1.2;
-    margin-bottom: 1.75rem;
-    max-width: 580px;
-  }
-  .quiz-options { display: flex; flex-direction: column; gap: 0.6rem; }
-  .quiz-option {
-    display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-    padding: 1rem 1.25rem;
-    background: var(--bg2);
-    border: 0.5px solid var(--border);
-    border-radius: 10px;
-    cursor: pointer;
-    transition: background 0.15s, border-color 0.15s;
-    text-align: left;
-  }
-  .quiz-option:hover { background: var(--bg3); border-color: var(--border2); }
-  .quiz-option.selected { border-color: var(--accent); background: rgba(200,240,96,0.06); }
-  .opt-letter {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    border: 0.5px solid var(--border2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: 500;
-    flex-shrink: 0;
-    color: var(--muted);
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
-  }
-  .quiz-option.selected .opt-letter { background: var(--accent); color: #0a0a08; border-color: var(--accent); }
-  .opt-text { font-size: 14px; color: var(--text); line-height: 1.5; padding-top: 2px; }
+/* UTILITY */
+.divider{height:.5px;background:var(--border);margin:2rem 0}
+.inline-accent{color:var(--accent)}
+.tag{display:inline-block;font-size:11px;padding:3px 9px;border-radius:5px;border:.5px solid var(--border2);color:var(--muted);margin-right:.3rem;margin-bottom:.3rem}
 
-  .quiz-nav { display: flex; align-items: center; justify-content: space-between; margin-top: 2rem; }
-  .quiz-btn-back {
-    background: none;
-    border: 0.5px solid var(--border2);
-    color: var(--muted);
-    font-family: var(--font-body);
-    font-size: 13px;
-    padding: 9px 20px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: color 0.15s, border-color 0.15s;
-  }
-  .quiz-btn-back:hover { color: var(--text); border-color: var(--border); }
-  .quiz-btn-next {
-    background: var(--accent);
-    border: none;
-    color: #0a0a08;
-    font-family: var(--font-body);
-    font-size: 13px;
-    font-weight: 500;
-    padding: 9px 24px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background 0.15s, opacity 0.15s;
-    opacity: 0.4;
-    pointer-events: none;
-  }
-  .quiz-btn-next.enabled { opacity: 1; pointer-events: all; }
-  .quiz-btn-next.enabled:hover { background: var(--accent2); }
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 
-  /* RESULT */
-  .quiz-result { display: none; animation: fadeUp 0.4s ease; }
-  .quiz-result.active { display: block; }
-  .result-stage-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 5px 14px;
-    border-radius: 20px;
-    margin-bottom: 1.25rem;
-    border: 0.5px solid;
-  }
-  .result-title {
-    font-family: var(--font-display);
-    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
-    line-height: 1.1;
-    margin-bottom: 1rem;
-  }
-  .result-desc { font-size: 1rem; color: var(--muted); max-width: 540px; line-height: 1.7; margin-bottom: 2rem; }
-
-  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
-  .result-card {
-    background: var(--bg2);
-    border: 0.5px solid var(--border);
-    border-radius: 10px;
-    padding: 1.25rem;
-  }
-  .result-card-label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
-  .result-card-content { font-size: 14px; color: var(--text); line-height: 1.5; }
-
-  .result-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
-  .result-btn-primary {
-    display: inline-flex; align-items: center; gap: 8px;
-    background: var(--accent); color: #0a0a08;
-    font-family: var(--font-body); font-size: 14px; font-weight: 500;
-    padding: 12px 24px; border-radius: 6px; border: none; cursor: pointer;
-    text-decoration: none; transition: background 0.15s;
-  }
-  .result-btn-primary:hover { background: var(--accent2); }
-  .result-btn-secondary {
-    display: inline-flex; align-items: center; gap: 8px;
-    background: none; color: var(--muted);
-    font-family: var(--font-body); font-size: 14px;
-    padding: 12px 24px; border-radius: 6px;
-    border: 0.5px solid var(--border2); cursor: pointer;
-    transition: color 0.15s, border-color 0.15s;
-  }
-  .result-btn-secondary:hover { color: var(--text); border-color: var(--border); }
-
-  .score-bar-wrap { margin: 1.5rem 0 2rem; }
-  .score-bar-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 0.4rem; }
-  .score-bar { height: 6px; background: var(--border2); border-radius: 4px; overflow: hidden; }
-  .score-bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
-
-  /* RESPONSIVE */
-  @media (max-width: 700px) {
-    .overview-grid { grid-template-columns: repeat(2, 1fr); }
-    .detail-header { grid-template-columns: 1fr; gap: 1.5rem; }
-    .builds-grid { grid-template-columns: 1fr; }
-    .stage-tabs { gap: 0; }
-    .stage-tab { padding: 0.75rem 1rem; font-size: 12px; }
-  }
-  @media (max-width: 480px) {
-    .overview-grid { grid-template-columns: 1fr 1fr; }
-    .hero { padding: 3rem 0 2rem; }
-  }
+@media(max-width:760px){
+  .page-layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .stages-overview,.principles-grid{grid-template-columns:1fr 1fr}
+  .sd-header,.criteria-grid,.builds-grid,.result-cards{grid-template-columns:1fr}
+  .sector-grid,.poe-grid,.glossary-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:480px){
+  .stages-overview,.sector-grid,.poe-grid,.glossary-grid{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
 
-<div class="container">
-  <nav>
-    <div class="nav-brand">Z<span>Futures</span></div>
-    <span class="nav-tag">Methodology</span>
-  </nav>
+<!-- NAV -->
+<div class="wrap-wide">
+<nav>
+  <div class="nav-brand">Z<span>Futures</span></div>
+  <div class="nav-right">
+    <span class="nav-tag">Methodology v1.0</span>
+    <a href="https://zfutures.vercel.app/#contact" class="nav-cta">Work with us →</a>
+  </div>
+</nav>
+</div>
 
-  <section class="hero">
-    <div class="hero-eyebrow">The ZFutures Transformation Framework</div>
-    <h1>Four stages.<br><em>One connected</em><br>transformation.</h1>
-    <p class="hero-desc">Every organization moves through predictable stages of digital maturity. This framework maps that journey and shows exactly what ZFutures builds at each stage to move you forward.</p>
-    <div class="hero-meta">
-      <div class="meta-item"><strong>4</strong> Stages</div>
-      <div class="meta-item"><strong>16+</strong> System types</div>
-      <div class="meta-item"><strong>6</strong> Industries</div>
-      <div class="meta-item"><strong>100%</strong> Ownership handover</div>
-    </div>
-  </section>
+<!-- HERO -->
+<div class="wrap">
+<section class="hero" id="top">
+  <div class="hero-eyebrow">The ZFutures Transformation Framework</div>
+  <h1>The methodology behind<br>every system <em>we build.</em></h1>
+  <p class="hero-lead">This document explains how ZFutures thinks about organizational transformation — how we assess where an organization is, what we build to move them forward, and how we ensure they own what we deliver long after we step back.</p>
+  <div class="hero-stats">
+    <div class="stat"><strong>4</strong><span>Maturity stages</span></div>
+    <div class="stat"><strong>6</strong><span>Engagement phases</span></div>
+    <div class="stat"><strong>6</strong><span>Sectors</span></div>
+    <div class="stat"><strong>100%</strong><span>Ownership handover</span></div>
+  </div>
+</section>
+</div>
 
-  <!-- OVERVIEW GRID -->
-  <section class="overview">
-    <div class="overview-grid">
-      <div class="overview-cell active" data-stage="1" onclick="selectStage(1)">
-        <div class="cell-num">01</div>
-        <div class="cell-label">Stage 1</div>
-        <div class="cell-name">Fragmented</div>
-        <div class="cell-tagline">Manual processes, disconnected tools, paper-based operations</div>
-        <div class="cell-arrow">→</div>
-      </div>
-      <div class="overview-cell" data-stage="2" onclick="selectStage(2)">
-        <div class="cell-num">02</div>
-        <div class="cell-label">Stage 2</div>
-        <div class="cell-name">Connected</div>
-        <div class="cell-tagline">Tools exist but don't communicate. Data moves manually between systems</div>
-        <div class="cell-arrow">→</div>
-      </div>
-      <div class="overview-cell" data-stage="3" onclick="selectStage(3)">
-        <div class="cell-num">03</div>
-        <div class="cell-label">Stage 3</div>
-        <div class="cell-name">Intelligent</div>
-        <div class="cell-tagline">Data informs decisions. Predictive systems replace gut feel</div>
-        <div class="cell-arrow">→</div>
-      </div>
-      <div class="overview-cell" data-stage="4" onclick="selectStage(4)">
-        <div class="cell-num">04</div>
-        <div class="cell-label">Stage 4</div>
-        <div class="cell-name">Scalable</div>
-        <div class="cell-tagline">Infrastructure that grows with the organization without breaking</div>
-        <div class="cell-arrow">→</div>
-      </div>
-    </div>
-  </section>
+<!-- PAGE LAYOUT WITH SIDEBAR -->
+<div class="wrap-wide">
+<div class="page-layout">
 
-  <!-- STAGE DETAIL PANELS -->
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-label">Contents</div>
+    <ul class="sidebar-nav">
+      <li><a href="#introduction" class="active">Introduction</a></li>
+      <li><a href="#principles">Core principles</a></li>
+      <li><div class="nav-section">Maturity Model</div></li>
+      <li><a href="#stages-overview">The four stages</a></li>
+      <li><a href="#stage-1">Stage 1 — Fragmented</a></li>
+      <li><a href="#stage-2">Stage 2 — Connected</a></li>
+      <li><a href="#stage-3">Stage 3 — Intelligent</a></li>
+      <li><a href="#stage-4">Stage 4 — Scalable</a></li>
+      <li><div class="nav-section">How We Work</div></li>
+      <li><a href="#process">Engagement process</a></li>
+      <li><a href="#sectors">Sectors</a></li>
+      <li><a href="#failure-modes">What causes failure</a></li>
+      <li><div class="nav-section">Tools</div></li>
+      <li><a href="#assessment">Self-assessment</a></li>
+      <li><a href="#glossary">Glossary</a></li>
+    </ul>
+  </aside>
 
-  <!-- Stage 1 -->
-  <section class="stage-detail visible" id="detail-1">
-    <div class="detail-header">
-      <div class="detail-left">
-        <div class="detail-eyebrow" style="color: var(--stage1)">Stage 01 — Fragmented</div>
-        <h2 class="detail-title">From paper<br>to <em style="font-style:italic; color:var(--stage1)">digital foundation.</em></h2>
-        <p class="detail-subtitle">Your data lives in notebooks, filing cabinets, or someone's memory. You know you need to change but don't know where to start. This is where most African organizations begin — and exactly where ZFutures works best.</p>
+  <!-- MAIN CONTENT -->
+  <main>
+
+    <!-- 01 INTRODUCTION -->
+    <section id="introduction">
+      <div class="sec-eyebrow">01 — Introduction</div>
+      <h2 class="sec-title">Why most digital<br>transformations <em>fail.</em></h2>
+      <p class="sec-lead">Not because the technology didn't work. Because the approach was wrong from the start.</p>
+
+      <p style="font-size:.95rem;color:var(--muted);line-height:1.8;margin-bottom:1.25rem">Most organizations across Africa approach digital transformation the same way: they see a problem, find a tool that promises to solve it, implement it, and then discover three months later that nothing has fundamentally changed. The tool sits unused, the problem persists, and the organization is left with less budget and more skepticism than before.</p>
+
+      <p style="font-size:.95rem;color:var(--muted);line-height:1.8;margin-bottom:1.25rem">The reason is almost never the technology. It is the gap between where an organization actually is and where the solution assumes it to be. A data analytics platform deployed into an organization that has never digitized its core processes will not produce insights. An AI model trained on data that was never properly collected will not generate reliable predictions. A system built without training the people who will use it will be abandoned within weeks.</p>
+
+      <p style="font-size:.95rem;color:var(--muted);line-height:1.8;margin-bottom:1.5rem">ZFutures was built on a different premise: that every organization moves through predictable stages of digital maturity, that each stage has specific requirements, and that the right system at the wrong stage is as useless as no system at all. This framework describes those stages, the systems that belong at each one, and the process we use to move organizations forward — without losing what is working today.</p>
+
+      <div class="blockquote">
+        <p>"Most organizations have the pieces. ZFutures builds the connections that make them work as one."</p>
       </div>
-      <div class="detail-right">
-        <div class="detail-box">
-          <div class="detail-box-label">Signals you are here</div>
-          <ul class="signal-list">
-            <li>Reports are typed by hand or assembled in spreadsheets</li>
-            <li>Approvals happen face to face or via WhatsApp</li>
-            <li>Critical information lives in one person's head</li>
-            <li>You cannot easily answer "how many?" or "how much?"</li>
-            <li>New staff takes months to understand what data exists</li>
+
+      <div class="callout">
+        <div class="callout-icon">📌</div>
+        <div class="callout-body"><strong>Who this document is for:</strong> Operations directors, CTOs, program leads, founders, and any leader responsible for how their organization uses technology and data to operate. You do not need a technical background to use this framework — it is designed to be read and applied by the people who run organizations, not just the people who build systems.</div>
+      </div>
+    </section>
+
+    <!-- 02 PRINCIPLES -->
+    <section id="principles">
+      <div class="sec-eyebrow">02 — Core Principles</div>
+      <h2 class="sec-title">The beliefs that shape<br>everything <em>we build.</em></h2>
+      <p class="sec-lead">These are not values on a wall. They are operational constraints that determine what we will and will not do in every engagement.</p>
+
+      <div class="principles-grid">
+        <div class="principle">
+          <div class="p-num">01</div>
+          <div class="p-title">We meet you where you are</div>
+          <div class="p-body">There is no minimum viable organization for working with ZFutures. We have built first digital systems for organizations on paper and AI infrastructure for institutions with hundreds of staff. The starting point is wherever you actually are, not wherever we wish you were.</div>
+        </div>
+        <div class="principle">
+          <div class="p-num">02</div>
+          <div class="p-title">Systems must connect, not just exist</div>
+          <div class="p-body">Every system we build is designed from day one to connect to every other system in your organization. We do not deploy isolated tools. We build the infrastructure that makes your entire operation function as one connected whole.</div>
+        </div>
+        <div class="principle">
+          <div class="p-num">03</div>
+          <div class="p-title">Real constraints are the brief</div>
+          <div class="p-body">No unlimited budgets. No perfect data. No ideal conditions. No stable internet everywhere. We design systems that work in the real world — where power cuts, variable connectivity, imperfect data, and limited technical staff are the norm, not the exception.</div>
+        </div>
+        <div class="principle">
+          <div class="p-num">04</div>
+          <div class="p-title">You must own what we build</div>
+          <div class="p-body">Every engagement ends with your team owning the system completely. We train your people, document every component, and hand over entirely. You should never need ZFutures to keep the lights on. Dependency is a failure mode, not a business model.</div>
+        </div>
+        <div class="principle">
+          <div class="p-num">05</div>
+          <div class="p-title">Test before you build</div>
+          <div class="p-body">Especially for AI and complex data systems — we validate ideas against real data and real users before committing full resources. If it will not deliver value in your specific context, we will tell you that honestly before a single line of code is written.</div>
+        </div>
+        <div class="principle">
+          <div class="p-num">06</div>
+          <div class="p-title">Progress over perfection</div>
+          <div class="p-body">We build in stages, not blueprints. We start with the one system that delivers the most immediate value, prove it works, then connect and build from there. No 5-year masterplans. Real progress that compounds and earns the right to the next phase.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03 STAGES OVERVIEW -->
+    <section id="stages-overview">
+      <div class="sec-eyebrow">03 — The Maturity Model</div>
+      <h2 class="sec-title">Four stages.<br><em>One direction of travel.</em></h2>
+      <p class="sec-lead">Every organization sits somewhere on this spectrum. Most sit between two stages. Understanding where you are is the prerequisite for knowing what to build next.</p>
+
+      <div class="stages-overview">
+        <div class="stage-card" data-s="1">
+          <div class="sc-num">01</div>
+          <div class="sc-label">Stage 1</div>
+          <div class="sc-name">Fragmented</div>
+          <div class="sc-tag">Manual, paper-based, disconnected</div>
+        </div>
+        <div class="stage-card" data-s="2">
+          <div class="sc-num">02</div>
+          <div class="sc-label">Stage 2</div>
+          <div class="sc-name">Connected</div>
+          <div class="sc-tag">Digital tools exist but operate in silos</div>
+        </div>
+        <div class="stage-card" data-s="3">
+          <div class="sc-num">03</div>
+          <div class="sc-label">Stage 3</div>
+          <div class="sc-name">Intelligent</div>
+          <div class="sc-tag">Data drives decisions and predictions</div>
+        </div>
+        <div class="stage-card" data-s="4">
+          <div class="sc-num">04</div>
+          <div class="sc-label">Stage 4</div>
+          <div class="sc-name">Scalable</div>
+          <div class="sc-tag">Infrastructure grows with the organization</div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <div class="callout-icon">💡</div>
+        <div class="callout-body"><strong>Important:</strong> Stages are not a hierarchy of sophistication — they are a map of readiness. A Stage 1 organization is not less capable or less ambitious than a Stage 3 organization. It simply has different needs, different constraints, and different systems that will deliver value right now. The goal is never to rush to Stage 4. The goal is to build what is right for where you are today.</div>
+      </div>
+    </section>
+
+    <!-- STAGE 1 DEEP DIVE -->
+    <section id="stage-1">
+      <div class="sec-eyebrow">Stage 01</div>
+      <h2 class="sec-title" style="color:var(--s1)">Fragmented</h2>
+
+      <div class="stage-deep" data-s="1">
+        <div class="sd-header">
+          <div>
+            <div class="sd-eyebrow">What it looks like</div>
+            <h3 class="sd-title">Your organization runs on <em>people, not systems.</em></h3>
+            <p class="sd-desc">Data lives in notebooks, filing cabinets, or someone's memory. Approvals happen face to face or over WhatsApp. Reports are typed by hand or compiled from paper records. Critical institutional knowledge walks out the door whenever a senior staff member leaves. The organization functions — but only because specific people hold it together, not because the infrastructure supports it.</p>
+            <p class="sd-desc" style="margin-top:.75rem">This is not a failure state. Most organizations across Africa start here, and many operate effectively at this stage for years. The problem appears when the organization tries to grow, replicate its model, or respond to external demands for data and accountability that its current infrastructure cannot meet.</p>
+          </div>
+          <div>
+            <div class="sd-box">
+              <div class="sd-box-label">Diagnostic signals — you are here if:</div>
+              <ul class="check-list">
+                <li><span class="ck">✓</span>Reports are produced manually, weekly or monthly</li>
+                <li><span class="ck">✓</span>Answering "how many?" takes days, not seconds</li>
+                <li><span class="ck">✓</span>Approvals require physical presence or phone calls</li>
+                <li><span class="ck">✓</span>New staff spends months learning "how things work here"</li>
+                <li><span class="ck">✓</span>Data is collected in the field but rarely used for planning</li>
+                <li><span class="ck">✓</span>There is no single place where operational data lives</li>
+                <li><span class="ck">✓</span>A key person leaving would create serious disruption</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="sub-title">What ZFutures builds at Stage 1</div>
+          <div class="builds-grid">
+            <div class="build-card">
+              <div class="bc-icon">🗂️</div>
+              <div class="bc-title">Digital foundation assessment</div>
+              <div class="bc-desc">We map your current operations end-to-end — how data flows, where decisions happen, what processes exist informally — and design the right starting point for your specific organization.</div>
+            </div>
+            <div class="build-card">
+              <div class="bc-icon">📋</div>
+              <div class="bc-title">Core operational systems</div>
+              <div class="bc-desc">The first digital systems for your most critical processes — data collection, case management, approval workflows, or record-keeping, depending on your sector and priorities.</div>
+            </div>
+            <div class="build-card">
+              <div class="bc-icon">☁️</div>
+              <div class="bc-title">Cloud infrastructure setup</div>
+              <div class="bc-desc">Secure, accessible infrastructure sized for your organization — designed to work even with variable connectivity, and to grow without constant re-engineering.</div>
+            </div>
+            <div class="build-card">
+              <div class="bc-icon">📱</div>
+              <div class="bc-title">Field data collection tools</div>
+              <div class="bc-desc">Mobile-first tools that work offline and sync when connected — built for the realities of field operations across diverse environments.</div>
+            </div>
+            <div class="build-card">
+              <div class="bc-icon">🎓</div>
+              <div class="bc-title">Team training and documentation</div>
+              <div class="bc-desc">Full training for every person who will use what we build, and complete documentation so the system survives staff turnover and can be extended without us.</div>
+            </div>
+            <div class="build-card">
+              <div class="bc-icon">📊</div>
+              <div class="bc-title">Basic reporting infrastructure</div>
+              <div class="bc-desc">Simple dashboards and automated reports that give leadership visibility into operations without requiring manual compilation every time.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="sub-title">Typical engagement timeline at Stage 1</div>
+          <div class="timeline">
+            <div class="tl-item">
+              <div class="tl-time">Weeks 1–2</div>
+              <div class="tl-content">
+                <div class="tl-title">Discovery and mapping</div>
+                <div class="tl-desc">We embed with your team, observe how work actually happens, and map every process, data flow, and decision point. We identify the highest-value starting points and the constraints we need to design around.</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-time">Weeks 3–4</div>
+              <div class="tl-content">
+                <div class="tl-title">System design and validation</div>
+                <div class="tl-desc">We design the first system with your team — not for your team. We prototype, test with real users, and refine before building anything permanent.</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-time">Weeks 5–10</div>
+              <div class="tl-content">
+                <div class="tl-title">Build and deploy</div>
+                <div class="tl-desc">We build the system, run parallel operations with your current process to validate, then transition fully when the team is confident.</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-time">Weeks 11–12</div>
+              <div class="tl-content">
+                <div class="tl-title">Training, handover, and stabilization</div>
+                <div class="tl-desc">Full training for all users, complete documentation, and a 4-week stabilization period where we remain available for support before stepping back.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="sub-title">Stage 1 → Stage 2 transition criteria</div>
+          <div class="criteria-box">
+            <div class="criteria-title">Your organization is ready to move to Stage 2 when:</div>
+            <div class="criteria-grid">
+              <div class="criteria-item">Core operational data is captured digitally and consistently</div>
+              <div class="criteria-item">At least 80% of staff can access and use the primary system</div>
+              <div class="criteria-item">Basic reports can be generated without manual compilation</div>
+              <div class="criteria-item">New staff can be onboarded using documented systems</div>
+              <div class="criteria-item">One staff member leaving no longer threatens operations</div>
+              <div class="criteria-item">Leadership has real-time or daily visibility into core metrics</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="sub-title">Common failure modes at Stage 1</div>
+          <ul class="failure-list">
+            <li>Implementing complex software before basic data discipline exists — the system becomes another thing nobody uses</li>
+            <li>Training only IT staff instead of the people who will actually use the system daily</li>
+            <li>Trying to digitize everything at once instead of starting with the highest-value process</li>
+            <li>Choosing tools based on what other organizations use rather than what fits your actual constraints</li>
+            <li>Not accounting for offline use in environments with variable connectivity</li>
           </ul>
         </div>
       </div>
-    </div>
-    <div class="builds-section">
-      <div class="section-label">What ZFutures builds at this stage</div>
-      <div class="builds-grid">
-        <div class="build-card">
-          <div class="build-icon">🗂️</div>
-          <div class="build-title">First digital systems</div>
-          <div class="build-desc">We assess your operations, design the right starting point, and build the foundation that takes your organization from zero to digital — without disrupting what is working.</div>
-        </div>
-        <div class="build-card">
-          <div class="build-icon">⚙️</div>
-          <div class="build-title">Workflow digitization</div>
-          <div class="build-desc">Paper-based approvals, data collection, and reporting converted into simple digital flows your team can use immediately with minimal training.</div>
-        </div>
-        <div class="build-card">
-          <div class="build-icon">☁️</div>
-          <div class="build-title">Cloud infrastructure</div>
-          <div class="build-desc">Secure, accessible infrastructure sized for your organization that grows without constant re-engineering or escalating costs.</div>
-        </div>
-        <div class="build-card">
-          <div class="build-icon">🎓</div>
-          <div class="build-title">Team capability building</div>
-          <div class="build-desc">Full training and documentation so your team owns what we build. You should never depend on us to keep things running.</div>
-        </div>
-      </div>
-      <div class="outcome-bar">
-        <div class="outcome-icon">🎯</div>
-        <div class="outcome-text"><strong>The outcome:</strong> A digital foundation your whole team can use. Data that is accessible, not buried. The ability to answer basic operational questions in seconds, not days.</div>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Stage 2 -->
-  <section class="stage-detail" id="detail-2">
-    <div class="detail-header">
-      <div class="detail-left">
-        <div class="detail-eyebrow" style="color: var(--stage2)">Stage 02 — Connected</div>
-        <h2 class="detail-title">From scattered tools<br>to <em style="font-style:italic; color:var(--stage2)">one operational backbone.</em></h2>
-        <p class="detail-subtitle">You have software, spreadsheets, apps, and databases — but they are all separate. Your team spends hours moving data between systems. Decisions are slow because nobody has the full picture at the same time.</p>
-      </div>
-      <div class="detail-right">
-        <div class="detail-box">
-          <div class="detail-box-label">Signals you are here</div>
-          <ul class="signal-list">
-            <li>Staff copy-paste data between systems daily</li>
-            <li>Different teams have different versions of the same numbers</li>
-            <li>A simple report requires pulling from 4 or 5 sources</li>
-            <li>No single system gives you a full operational picture</li>
-            <li>You bought tools that solved one problem and created others</li>
+    <!-- STAGE 2 DEEP DIVE -->
+    <section id="stage-2">
+      <div class="sec-eyebrow">Stage 02</div>
+      <h2 class="sec-title" style="color:var(--s2)">Connected</h2>
+
+      <div class="stage-deep" data-s="2">
+        <div class="sd-header">
+          <div>
+            <div class="sd-eyebrow">What it looks like</div>
+            <h3 class="sd-title">You have tools.<br><em>They just don't talk.</em></h3>
+            <p class="sd-desc">Your organization has gone digital — at least partially. You have software for finance, a system for beneficiary data, spreadsheets for project tracking, and maybe a CRM or ERP. The problem is they are all separate. Your team spends hours moving data between systems. Every report requires pulling from three or four different sources and manually reconciling the results. Nobody ever has the full picture at the same time.</p>
+            <p class="sd-desc" style="margin-top:.75rem">This is one of the most common and costly stages. Organizations at Stage 2 often feel more frustrated than those at Stage 1, because they have invested in technology and are not seeing the return. The investment is not wasted — but it needs to be connected.</p>
+          </div>
+          <div>
+            <div class="sd-box">
+              <div class="sd-box-label">Diagnostic signals — you are here if:</div>
+              <ul class="check-list">
+                <li><span class="ck">✓</span>Staff copy-paste data between systems daily or weekly</li>
+                <li><span class="ck">✓</span>Different departments have different versions of the same numbers</li>
+                <li><span class="ck">✓</span>A simple cross-departmental report takes hours to produce</li>
+                <li><span class="ck">✓</span>You have bought tools that solved one problem and created others</li>
+                <li><span class="ck">✓</span>No single system gives you a full operational picture</li>
+                <li><span class="ck">✓</span>Decisions are delayed because data is not accessible in real time</li>
+                <li><span class="ck">✓</span>Audit or compliance processes require significant manual effort</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="sub-title">What ZFutures builds at Stage 2</div>
+          <div class="builds-grid">
+            <div class="build-card">
+              <div class="bc-icon">🔗</div>
+              <div class="bc-title">System integration layer</div>
+              <div class="bc-desc">The connective tissue between your existing systems — APIs, data pipelines, and middleware that make your tools communicate and eliminate manual data movement permanently.</div>
+            </div>
+            <div class="build-card">
+              <div class="bc-icon">🔄</div>
+              <div class="bc-title">Workflow automation</div>
+              <div class="bc-desc">End-to-end workflows that route, approve, and escalate without manual intervention — replacing email chains and WhatsApp approvals with structured, auditable processes.</div>
+            </div>
+            <div class="build-card">
+              <div class="bc-icon">📊</div>
+              <div class="bc-title">Real-time operational dashboards</div>
+              <div class="bc-desc">Leadership dashboards that pull from every system and show the full operational picture — where things stand, where bottlenecks are forming, what needs attention today.</div>
+            </div>
+            <div class="build-card">
+              <div class="bc-icon">⚡</div>
+              <div class="bc-title">Automated decision engines</div>
+              <div class="bc-desc">Rule-based engines for credit scoring, procurement approvals, service routing, and compliance checks — cutting processing time from days to seconds without human intervention at every step.</div>
+            </div>
+            <div class="build-card">
+              <div class="bc-icon">🗄️</div>
+              <div class="bc-title">Unified data layer</div>
+              <div class="bc-desc">A single source of truth that aggregates data from all your systems, resolves conflicts, and ensures everyone in the organization is working from the same numbers.</div>
+            </div>
+            <div class="build-card">
+              <div class="bc-icon">🔐</div>
+              <div class="bc-title">Access control and governance</div>
+              <div class="bc-desc">Role-based access controls, audit logs, and data governance structures that keep your integrated systems secure and compliant as more data flows through them.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="sub-title">Typical engagement timeline at Stage 2</div>
+          <div class="timeline">
+            <div class="tl-item">
+              <div class="tl-time">Weeks 1–3</div>
+              <div class="tl-content">
+                <div class="tl-title">Systems audit and integration mapping</div>
+                <div class="tl-desc">We map every system, every data flow, every manual handoff, and every duplication point in your current operations. We identify integration priorities and design the architecture that will connect them.</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-time">Weeks 4–6</div>
+              <div class="tl-content">
+                <div class="tl-title">Integration layer build — Phase 1</div>
+                <div class="tl-desc">We start with the highest-friction integration point — typically the one causing the most manual work or the most data inconsistency — and build, test, and stabilize it before moving on.</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-time">Weeks 7–14</div>
+              <div class="tl-content">
+                <div class="tl-title">Workflow automation and dashboards</div>
+                <div class="tl-desc">We build out the automated workflows and real-time dashboards on top of the integrated data layer, testing each with real users before deployment.</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-time">Weeks 15–16</div>
+              <div class="tl-content">
+                <div class="tl-title">Handover and stabilization</div>
+                <div class="tl-desc">Full documentation, team training on managing and extending the integration layer, and a stabilization period before we step back.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="sub-title">Stage 2 → Stage 3 transition criteria</div>
+          <div class="criteria-box">
+            <div class="criteria-title">Your organization is ready to move to Stage 3 when:</div>
+            <div class="criteria-grid">
+              <div class="criteria-item">All core systems share data automatically without manual intervention</div>
+              <div class="criteria-item">A single dashboard gives leadership the full operational picture</div>
+              <div class="criteria-item">Key workflows are automated with minimal human handoffs</div>
+              <div class="criteria-item">Data quality is consistent and trusted across departments</div>
+              <div class="criteria-item">Reporting happens automatically, not on demand</div>
+              <div class="criteria-item">The team can maintain and extend integrations independently</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="sub-title">Common failure modes at Stage 2</div>
+          <ul class="failure-list">
+            <li>Integrating systems without first cleaning the data — garbage in, garbage out, now faster and at scale</li>
+            <li>Automating broken processes instead of redesigning them — automation makes bad workflows faster, not better</li>
+            <li>Building dashboards before establishing data governance — dashboards nobody trusts are worse than no dashboards</li>
+            <li>Trying to connect everything at once instead of starting with the highest-impact integration</li>
+            <li>Not training the team to maintain the integration layer — creating a new dependency on external support</li>
           </ul>
         </div>
       </div>
-    </div>
-    <div class="builds-section">
-      <div class="section-label">What ZFutures builds at this stage</div>
-      <div class="builds-grid">
-        <div class="build-card">
-          <div class="build-icon">🔗</div>
-          <div class="build-title">System integration layer</div>
-          <div class="build-desc">We connect what is fragmented, eliminate duplicate data entry, and build the operational backbone that makes everything run as one connected whole.</div>
-        </div>
-        <div class="build-card">
-          <div class="build-icon">🤖</div>
-          <div class="build-title">Automated decision engines</div>
-          <div class="build-desc">Credit scoring, procurement approvals, and service routing that cut processing time from days to seconds — without manual intervention at every step.</div>
-        </div>
-        <div class="build-card">
-          <div class="build-icon">📊</div>
-          <div class="build-title">Real-time operational dashboards</div>
-          <div class="build-desc">Leadership sees exactly what is happening, where bottlenecks are forming, and what needs action — without waiting for a weekly report.</div>
-        </div>
-        <div class="build-card">
-          <div class="build-icon">🔄</div>
-          <div class="build-title">End-to-end workflow automation</div>
-          <div class="build-desc">Routing, approvals, and escalations that happen without manual handoffs — permanently eliminating paper and email-based processes.</div>
-        </div>
-      </div>
-      <div class="outcome-bar">
-        <div class="outcome-icon">🎯</div>
-        <div class="outcome-text"><strong>The outcome:</strong> One source of truth for your organization. Data that flows automatically between systems. Decisions that happen in hours, not days.</div>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Stage 3 -->
-  <section class="stage-detail" id="detail-3">
-    <div class="detail-header">
-      <div class="detail-left">
-        <div class="detail-eyebrow" style="color: var(--stage3)">Stage 03 — Intelligent</div>
-        <h2 class="detail-title">From data you collect<br>to <em style="font-style:italic; color:var(--stage3)">decisions you trust.</em></h2>
-        <p class="detail-subtitle">You collect data but it sits in reports nobody reads or dashboards nobody trusts. Your team still makes decisions on gut feel. The answers are in the data somewhere — but you cannot get to them.</p>
-      </div>
-      <div class="detail-right">
-        <div class="detail-box">
-          <div class="detail-box-label">Signals you are here</div>
-          <ul class="signal-list">
-            <li>Dashboards exist but nobody checks them before deciding</li>
-            <li>You find out about problems after they become expensive</li>
-            <li>Field data is collected but rarely used for planning</li>
-            <li>AI projects were started but delivered nothing usable</li>
-            <li>Analysts spend 80% of their time preparing data, 20% analyzing</li>
+    <!-- STAGE 3 DEEP DIVE -->
+    <section id="stage-3">
+      <div class="sec-eyebrow">Stage 03</div>
+      <h2 class="sec-title" style="color:var(--s3)">Intelligent</h2>
+
+      <div class="stage-deep" data-s="3">
+        <div class="sd-header">
+          <div>
+            <div class="sd-eyebrow">What it looks like</div>
+            <h3 class="sd-title">Data exists.<br><em>It just doesn't decide.</em></h3>
+            <p class="sd-desc">Your systems are connected and your data is flowing. But it is not yet driving decisions the way it should. Reports exist but they describe the past, not predict the future. Dashboards are checked after something goes wrong, not before. Your team knows the answers are in the data — but the infrastructure to surface those answers reliably does not yet exist.</p>
+            <p class="sd-desc" style="margin-top:.75rem">Stage 3 is where the real competitive advantage is built. Organizations that successfully transition into this stage can see problems before they become crises, identify opportunities before competitors, and make decisions with a speed and confidence that is simply not possible at earlier stages.</p>
+          </div>
+          <div>
+            <div class="sd-box">
+              <div class="sd-box-label">Diagnostic signals — you are here if:</div>
+              <ul class="check-list">
+                <li><span class="ck">✓</span>Dashboards exist but decisions are still made on gut feel</li>
+                <li><span class="ck">✓</span>You find out about problems after they become expensive</li>
+                <li><span class="ck">✓</span>Analysts spend 80% of time preparing data, 20% analyzing</li>
+                <li><span class="ck">✓</span>AI projects were started but delivered nothing in production</li>
+                <li><span class="ck">✓</span>Reports tell you what happened but not what will happen</li>
+                <li><span class="ck">✓</span>You have historical data you know is valuable but cannot use</li>
+                <li><span class="ck">✓</span>Strategic planning is based on last year's numbers</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="sub-title">What ZFutures builds at Stage 3</div>
+          <div class="builds-grid">
+            <div class="build-card">
+              <div class="bc-icon">🔮</div>
+              <div class="bc-title">Predictive models</div>
+              <div class="bc-desc">Models that forecast demand, customer churn, beneficiary dropout, loan default, crop yield, or service failure — giving teams time to act before problems materialize.</div>
+            </div>
+            <div class="build-card">
+              <div class="bc-icon">🧠</div>
+              <div class="bc-title">Unified analytics platform</div>
+              <div class="bc-desc">A single intelligence layer that pulls data from every source, applies your organization's business logic, and surfaces insights your decision-makers can understand and act on.</div>
+            </div>
+            <div class="build-card">
+              <div class="bc-icon">🤖</div>
+              <div class="bc-title">AI integration — validated first</div>
+              <div class="bc-desc">Rapid prototype-to-pilot pipeline: working prototypes tested with real users and real data before committing budget to a full build. If AI will not deliver value in your context, we tell you before you invest.</div>
+            </div>
+            <div class="build-card">
+              <div class="bc-icon">📋</div>
+              <div class="bc-title">Automated reporting systems</div>
+              <div class="bc-desc">Donor reports, board packs, compliance documents, and field summaries that generate themselves from live data — without manual effort from your team.</div>
+            </div>
+            <div class="build-card">
+              <div class="bc-icon">🏗️</div>
+              <div class="bc-title">Data governance framework</div>
+              <div class="bc-desc">Clear ownership, quality standards, access policies, and audit trails that keep your intelligence infrastructure reliable and trustworthy as it grows in complexity.</div>
+            </div>
+            <div class="build-card">
+              <div class="bc-icon">💬</div>
+              <div class="bc-title">Generative AI for operations</div>
+              <div class="bc-desc">LLM integration for internal knowledge management, communication drafting, field advisory tools, and process acceleration — embedded into real workflows, not sitting as a standalone chatbot.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="sub-title">On AI — our honest position</div>
+          <div class="callout">
+            <div class="callout-icon">⚠️</div>
+            <div class="callout-body"><strong>AI is not a Stage 1 or Stage 2 solution.</strong> The most common and expensive mistake we see is organizations attempting AI before their data infrastructure is ready for it. AI models are only as good as the data they are trained on. If your data is fragmented, inconsistent, or incomplete, an AI model will produce fragmented, inconsistent, and incomplete outputs — with more confidence than a human would. We run an AI readiness assessment at the start of every Stage 3 engagement and will tell you honestly if the foundation is not yet there.</div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="sub-title">Stage 3 → Stage 4 transition criteria</div>
+          <div class="criteria-box">
+            <div class="criteria-title">Your organization is ready to move to Stage 4 when:</div>
+            <div class="criteria-grid">
+              <div class="criteria-item">Predictive models are in production and informing real decisions</div>
+              <div class="criteria-item">Leadership uses data proactively, not reactively</div>
+              <div class="criteria-item">Reporting is fully automated across all core functions</div>
+              <div class="criteria-item">At least one AI system is deployed and delivering measurable value</div>
+              <div class="criteria-item">The team can build and maintain models independently</div>
+              <div class="criteria-item">Data governance is embedded in operations, not just documented</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="sub-title">Common failure modes at Stage 3</div>
+          <ul class="failure-list">
+            <li>Building AI before the data infrastructure is ready — producing unreliable outputs that destroy trust in the entire intelligence program</li>
+            <li>Deploying models in isolation from operations — models that live in notebooks and are never used in real decisions</li>
+            <li>Skipping AI validation to save time — spending 6 months building something users will not trust or adopt</li>
+            <li>Centralizing all intelligence work in one analyst or team — creating a bottleneck that limits the value of the entire system</li>
+            <li>Measuring model accuracy instead of decision outcomes — optimizing for the wrong thing</li>
           </ul>
         </div>
       </div>
-    </div>
-    <div class="builds-section">
-      <div class="section-label">What ZFutures builds at this stage</div>
-      <div class="builds-grid">
-        <div class="build-card">
-          <div class="build-icon">🔮</div>
-          <div class="build-title">Predictive models</div>
-          <div class="build-desc">Forecast demand, customer churn, beneficiary dropout, and financial risk before they materialize — giving teams time to act, not react.</div>
-        </div>
-        <div class="build-card">
-          <div class="build-icon">🧠</div>
-          <div class="build-title">Unified analytics platform</div>
-          <div class="build-desc">Pull data from every source in your organization and present it in ways decision-makers can understand and trust — in real time.</div>
-        </div>
-        <div class="build-card">
-          <div class="build-icon">📋</div>
-          <div class="build-title">Automated reporting systems</div>
-          <div class="build-desc">Donor reports, board packs, and compliance documents that generate themselves — without manual effort from your team.</div>
-        </div>
-        <div class="build-card">
-          <div class="build-icon">✅</div>
-          <div class="build-title">AI validation framework</div>
-          <div class="build-desc">We test every AI idea against real data and real users before you commit budget. If it won't deliver value in your context, we tell you that honestly.</div>
-        </div>
-      </div>
-      <div class="outcome-bar">
-        <div class="outcome-icon">🎯</div>
-        <div class="outcome-text"><strong>The outcome:</strong> Decisions grounded in evidence, not instinct. Early warning systems that surface problems before they become crises. AI that actually works in your specific context.</div>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Stage 4 -->
-  <section class="stage-detail" id="detail-4">
-    <div class="detail-header">
-      <div class="detail-left">
-        <div class="detail-eyebrow" style="color: var(--stage4)">Stage 04 — Scalable</div>
-        <h2 class="detail-title">From systems that break<br>to <em style="font-style:italic; color:var(--stage4)">infrastructure that holds.</em></h2>
-        <p class="detail-subtitle">What worked at 20 people is failing at 100. One office was manageable. Five offices is chaos. The processes that got you here cannot take you further — and you know it, but you cannot afford to stop and rebuild.</p>
-      </div>
-      <div class="detail-right">
-        <div class="detail-box">
-          <div class="detail-box-label">Signals you are here</div>
-          <ul class="signal-list">
-            <li>New locations or teams create operational chaos, not just growth</li>
-            <li>Quality and speed drop every time you add headcount</li>
-            <li>Founders or senior staff are still in every decision</li>
-            <li>Your systems slow down under the load you already have</li>
-            <li>You are building workarounds on top of workarounds</li>
+    <!-- STAGE 4 DEEP DIVE -->
+    <section id="stage-4">
+      <div class="sec-eyebrow">Stage 04</div>
+      <h2 class="sec-title" style="color:var(--s4)">Scalable</h2>
+
+      <div class="stage-deep" data-s="4">
+        <div class="sd-header">
+          <div>
+            <div class="sd-eyebrow">What it looks like</div>
+            <h3 class="sd-title">Growth is breaking<br><em>what you built.</em></h3>
+            <p class="sd-desc">What worked at 20 people is failing at 100. One office was manageable. Five offices is chaos. The processes that got you here cannot take you to the next stage — and you know it, but you cannot afford to stop and rebuild while the organization keeps running.</p>
+            <p class="sd-desc" style="margin-top:.75rem">Stage 4 organizations have the most sophisticated systems — and the most complex problems. The challenge is no longer building something that works, but building something that continues to work as the organization expands, diversifies, and operates across geographies at a scale the original systems were never designed for.</p>
+          </div>
+          <div>
+            <div class="sd-box">
+              <div class="sd-box-label">Diagnostic signals — you are here if:</div>
+              <ul class="check-list">
+                <li><span class="ck">✓</span>New teams or locations create chaos, not just complexity</li>
+                <li><span class="ck">✓</span>Quality and speed decline every time you add headcount</li>
+                <li><span class="ck">✓</span>Founders or senior staff are still bottlenecks for decisions</li>
+                <li><span class="ck">✓</span>Systems slow down noticeably under current load</li>
+                <li><span class="ck">✓</span>You are building workarounds on top of workarounds</li>
+                <li><span class="ck">✓</span>New markets or programs require rebuilding instead of replicating</li>
+                <li><span class="ck">✓</span>Technical debt is visibly slowing product or service delivery</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="sub-title">What ZFutures builds at Stage 4</div>
+          <div class="builds-grid">
+            <div class="build-card">
+              <div class="bc-icon">🏗️</div>
+              <div class="bc-title">Scalable architecture redesign</div>
+              <div class="bc-desc">Systems designed to handle order-of-magnitude growth without full rebuilds at each stage — built in phases so you keep running while we strengthen the foundation beneath you.</div>
+            </div>
+            <div class="build-card">
+              <div class="bc-icon">🗺️</div>
+              <div class="bc-title">Transformation roadmap</div>
+              <div class="bc-desc">A sequenced plan grounded in operational reality — prioritized by value and feasibility, not by what looks impressive in a strategy presentation. Executable, not aspirational.</div>
+            </div>
+            <div class="build-card">
+              <div class="bc-icon">👥</div>
+              <div class="bc-title">Organizational capability building</div>
+              <div class="bc-desc">Internal teams trained to own, extend, and evolve the systems we build — so the organization becomes more capable at every stage, not more dependent on external partners.</div>
+            </div>
+            <div class="build-card">
+              <div class="bc-icon">🔁</div>
+              <div class="bc-title">Change management support</div>
+              <div class="bc-desc">The human side of transformation — getting your people actually using new systems rather than working around them, and building the organizational habits that make scale sustainable.</div>
+            </div>
+            <div class="build-card">
+              <div class="bc-icon">📈</div>
+              <div class="bc-title">Performance frameworks</div>
+              <div class="bc-desc">Measurement systems that tell you whether your infrastructure is actually delivering the outcomes you built it for — and where to invest next.</div>
+            </div>
+            <div class="build-card">
+              <div class="bc-icon">🌍</div>
+              <div class="bc-title">Multi-geography infrastructure</div>
+              <div class="bc-desc">Systems designed to operate consistently across multiple offices, countries, and connectivity environments — maintaining data integrity and operational coherence at scale.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="sub-title">Common failure modes at Stage 4</div>
+          <ul class="failure-list">
+            <li>Attempting a full system rebuild while the organization is still running — the right approach is staged migration, not a "big bang" cutover</li>
+            <li>Focusing only on technical architecture without addressing organizational structure — systems built for scale fail if the people structures do not scale with them</li>
+            <li>Treating scale as a technical problem when it is partly a leadership problem — decision-making frameworks matter as much as infrastructure</li>
+            <li>Not investing in internal capability — organizations that depend on external partners to maintain scaled systems are permanently vulnerable</li>
           </ul>
         </div>
       </div>
-    </div>
-    <div class="builds-section">
-      <div class="section-label">What ZFutures builds at this stage</div>
+    </section>
+
+    <!-- 04 ENGAGEMENT PROCESS -->
+    <section id="process">
+      <div class="sec-eyebrow">04 — Engagement Process</div>
+      <h2 class="sec-title">How every ZFutures<br>engagement <em>actually works.</em></h2>
+      <p class="sec-lead">Six phases. Every engagement. Regardless of stage, sector, or system complexity.</p>
+
+      <div class="process-steps">
+        <div class="process-step">
+          <div class="ps-num">1</div>
+          <div>
+            <div class="ps-title">Discovery — understand before designing</div>
+            <div class="ps-desc">We do not start with a product pitch or a pre-built solution. We start by understanding your organization: how it operates, where the real friction is, what has been tried before, what constraints cannot be moved. This phase involves interviews, process observation, data audits, and system reviews. The output is not a proposal — it is a shared understanding of the real problem.</div>
+            <div class="ps-deliverables">
+              <span class="ps-tag">Current state map</span>
+              <span class="ps-tag">Problem definition</span>
+              <span class="ps-tag">Constraint inventory</span>
+              <span class="ps-tag">Priority recommendation</span>
+            </div>
+          </div>
+        </div>
+        <div class="process-step">
+          <div class="ps-num">2</div>
+          <div>
+            <div class="ps-title">Design — build the right thing, not the obvious thing</div>
+            <div class="ps-desc">Based on discovery, we design a solution specific to your challenge. We present options, explain trade-offs, and design with your team — not for them. Nothing is finalized until you understand and agree with the approach. For complex or novel systems, we prototype before designing the full solution.</div>
+            <div class="ps-deliverables">
+              <span class="ps-tag">Solution architecture</span>
+              <span class="ps-tag">Technical specification</span>
+              <span class="ps-tag">Prototype (where applicable)</span>
+              <span class="ps-tag">Implementation plan</span>
+            </div>
+          </div>
+        </div>
+        <div class="process-step">
+          <div class="ps-num">3</div>
+          <div>
+            <div class="ps-title">Validate — test with real users before building</div>
+            <div class="ps-desc">Especially for AI systems and novel workflows, we run a validation phase: testing the core assumption of the solution with real users, real data, and real conditions before committing full build resources. This phase has saved organizations significant budget by identifying flawed assumptions early. If the solution will not work in your context, we find that out in week 4, not month 8.</div>
+            <div class="ps-deliverables">
+              <span class="ps-tag">User testing results</span>
+              <span class="ps-tag">Data validation report</span>
+              <span class="ps-tag">Go/no-go recommendation</span>
+            </div>
+          </div>
+        </div>
+        <div class="process-step">
+          <div class="ps-num">4</div>
+          <div>
+            <div class="ps-title">Build — a working system is the only deliverable</div>
+            <div class="ps-desc">We write the code, configure the systems, and build the infrastructure. We work in short cycles — delivering working components, getting feedback, and iterating — rather than disappearing for three months and delivering a finished system that has drifted from what you actually need. You see the system being built, not just the final result.</div>
+            <div class="ps-deliverables">
+              <span class="ps-tag">Working system</span>
+              <span class="ps-tag">Test documentation</span>
+              <span class="ps-tag">Deployment runbook</span>
+            </div>
+          </div>
+        </div>
+        <div class="process-step">
+          <div class="ps-num">5</div>
+          <div>
+            <div class="ps-title">Train and hand over — you own it completely</div>
+            <div class="ps-desc">Every person who will use or manage the system receives full training before we step back. We document everything: how the system works, how to maintain it, how to extend it, and who to contact if something breaks. The goal is that you never need ZFutures to keep the lights on. If you do, we have not done our job.</div>
+            <div class="ps-deliverables">
+              <span class="ps-tag">User training</span>
+              <span class="ps-tag">Admin training</span>
+              <span class="ps-tag">Full documentation</span>
+              <span class="ps-tag">Handover certificate</span>
+            </div>
+          </div>
+        </div>
+        <div class="process-step">
+          <div class="ps-num">6</div>
+          <div>
+            <div class="ps-title">Stay reachable — because organizations keep growing</div>
+            <div class="ps-desc">We stay available after handover. Not as a dependency — your team owns the system — but as a partner available when your organization reaches its next inflection point, wants to extend what we built, or is ready to move to the next stage of maturity. Every organization we work with has an open line to us, indefinitely.</div>
+            <div class="ps-deliverables">
+              <span class="ps-tag">Ongoing availability</span>
+              <span class="ps-tag">Maturity check-ins</span>
+              <span class="ps-tag">Extension support</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 05 SECTORS -->
+    <section id="sectors">
+      <div class="sec-eyebrow">05 — Sectors</div>
+      <h2 class="sec-title">Where we work.<br><em>What we understand.</em></h2>
+      <p class="sec-lead">Every sector has its own data realities, regulatory environment, and operational constraints. These are not just markets we serve — they are environments we know well.</p>
+
+      <div class="sector-grid">
+        <div class="sector-card">
+          <div class="sec-icon">💰</div>
+          <div class="sec-name">Financial Services & Insurance</div>
+          <div class="sec-stages">
+            <span class="stage-pip pip-2">Stage 2</span>
+            <span class="stage-pip pip-3">Stage 3</span>
+          </div>
+          <div class="sec-note">Credit scoring, fraud detection, digital onboarding, KYC automation, regulatory reporting. We design for markets where traditional data is scarce and mobile-first is the norm.</div>
+        </div>
+        <div class="sector-card">
+          <div class="sec-icon">🌍</div>
+          <div class="sec-name">Development & NGOs</div>
+          <div class="sec-stages">
+            <span class="stage-pip pip-1">Stage 1</span>
+            <span class="stage-pip pip-2">Stage 2</span>
+            <span class="stage-pip pip-3">Stage 3</span>
+          </div>
+          <div class="sec-note">M&E systems, beneficiary data platforms, field data collection, donor reporting automation. Built for organizations with distributed teams and donor accountability requirements.</div>
+        </div>
+        <div class="sector-card">
+          <div class="sec-icon">🏥</div>
+          <div class="sec-name">Healthcare & Life Sciences</div>
+          <div class="sec-stages">
+            <span class="stage-pip pip-1">Stage 1</span>
+            <span class="stage-pip pip-2">Stage 2</span>
+            <span class="stage-pip pip-3">Stage 3</span>
+          </div>
+          <div class="sec-note">Patient records, clinical decision support, health service analytics, supply chain optimization. Designed to work reliably even in resource-constrained environments.</div>
+        </div>
+        <div class="sector-card">
+          <div class="sec-icon">⚡</div>
+          <div class="sec-name">Technology & Startups</div>
+          <div class="sec-stages">
+            <span class="stage-pip pip-2">Stage 2</span>
+            <span class="stage-pip pip-3">Stage 3</span>
+            <span class="stage-pip pip-4">Stage 4</span>
+          </div>
+          <div class="sec-note">Product analytics, ML infrastructure, growth data systems, AI-powered features. We help startups build data foundations that hold up under real load and support real decisions.</div>
+        </div>
+        <div class="sector-card">
+          <div class="sec-icon">🌾</div>
+          <div class="sec-name">Agriculture & Food Systems</div>
+          <div class="sec-stages">
+            <span class="stage-pip pip-1">Stage 1</span>
+            <span class="stage-pip pip-2">Stage 2</span>
+            <span class="stage-pip pip-3">Stage 3</span>
+          </div>
+          <div class="sec-note">Crop yield prediction, supply chain visibility, farmer advisory tools, market analytics. Built for the unique data challenges of agricultural operations across Africa.</div>
+        </div>
+        <div class="sector-card">
+          <div class="sec-icon">🏛️</div>
+          <div class="sec-name">Government & Public Sector</div>
+          <div class="sec-stages">
+            <span class="stage-pip pip-1">Stage 1</span>
+            <span class="stage-pip pip-2">Stage 2</span>
+          </div>
+          <div class="sec-note">Citizen service delivery, revenue management, procurement systems, public health surveillance. We understand public sector constraints and design transformation that starts small and proves value fast.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 06 FAILURE MODES -->
+    <section id="failure-modes">
+      <div class="sec-eyebrow">06 — What Causes Failure</div>
+      <h2 class="sec-title">Why transformation<br>projects <em>fail here.</em></h2>
+      <p class="sec-lead">Based on our experience across sectors in Africa, these are the patterns that cause digital transformation initiatives to stall, fail, or deliver nothing lasting. We have designed our methodology specifically to prevent each of them.</p>
+
       <div class="builds-grid">
         <div class="build-card">
-          <div class="build-icon">🏗️</div>
-          <div class="build-title">Scalable architecture</div>
-          <div class="build-desc">Systems designed to handle order-of-magnitude growth without requiring full rebuilds at each stage — built around where you are going, not just where you are.</div>
+          <div class="bc-icon">🎯</div>
+          <div class="bc-title">Wrong stage, right tool</div>
+          <div class="bc-desc">The most common failure: deploying a sophisticated system into an organization that is not ready for it. An analytics platform without clean data. AI without reliable inputs. Integration before basic digitization. The technology works — the foundation does not support it.</div>
         </div>
         <div class="build-card">
-          <div class="build-icon">🗺️</div>
-          <div class="build-title">Transformation roadmap</div>
-          <div class="build-desc">Grounded in operational reality. Sequenced by value and feasibility — not by what looks impressive on a slide or in a proposal.</div>
+          <div class="bc-icon">👤</div>
+          <div class="bc-title">Built for, not with</div>
+          <div class="bc-desc">Systems designed without the people who will use them end up rejected or abandoned. The users know things the designers do not. Skipping co-design does not save time — it produces systems that require constant workarounds from day one.</div>
         </div>
         <div class="build-card">
-          <div class="build-icon">👥</div>
-          <div class="build-title">Organizational capability building</div>
-          <div class="build-desc">Internal teams trained to own, extend, and evolve the systems we build together — so the organization becomes more capable, not more dependent.</div>
+          <div class="bc-icon">📚</div>
+          <div class="bc-title">Training as an afterthought</div>
+          <div class="bc-desc">Systems where only IT staff are trained, or where training happens once and is never reinforced, fail within months of the vendor leaving. Adoption is built into the build process, not tacked on at the end.</div>
         </div>
         <div class="build-card">
-          <div class="build-icon">📈</div>
-          <div class="build-title">Performance frameworks</div>
-          <div class="build-desc">Clear measurement systems that tell you whether your infrastructure is actually delivering the outcomes you built it for — and where to improve.</div>
+          <div class="bc-icon">🔌</div>
+          <div class="bc-title">Dependency without ownership</div>
+          <div class="bc-desc">Organizations that cannot maintain their own systems without external support are permanently vulnerable. When the vendor relationship ends, the system degrades. Every system we build is designed to be maintained and extended by your team.</div>
+        </div>
+        <div class="build-card">
+          <div class="bc-icon">🏃</div>
+          <div class="bc-title">Scope before value</div>
+          <div class="bc-desc">Large, comprehensive projects that try to solve everything at once almost always fail to deliver. The systems that succeed start narrow, prove value, and expand — building organizational confidence and technical capability at each step.</div>
+        </div>
+        <div class="build-card">
+          <div class="bc-icon">💸</div>
+          <div class="bc-title">Skipping validation</div>
+          <div class="bc-desc">Especially for AI and analytics projects — committing full build resources to an untested idea is how organizations spend significant budget and get nothing usable. Validation before build is not optional; it is the single most effective risk-reduction step available.</div>
         </div>
       </div>
-      <div class="outcome-bar">
-        <div class="outcome-icon">🎯</div>
-        <div class="outcome-text"><strong>The outcome:</strong> An organization that can double in size without doubling in complexity. Systems that support expansion instead of fighting it. Infrastructure built for the next decade.</div>
+    </section>
+
+    <!-- 07 SELF ASSESSMENT -->
+    <section id="assessment">
+      <div class="sec-eyebrow">07 — Self-Assessment</div>
+      <h2 class="sec-title">Find your stage.<br><em>In 2 minutes.</em></h2>
+      <p class="sec-lead">8 questions about how your organization operates today. Your answers map directly to the framework and tell you where ZFutures would focus first.</p>
+
+      <div class="quiz-wrap">
+        <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quiz-progress"></div></div>
+
+        <div class="quiz-step active" id="q1">
+          <div class="quiz-q-num">Question 1 of 8</div>
+          <div class="quiz-question">How does your organization currently store and manage operational data?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-q="1" data-score="1" onclick="selectOption(this)"><div class="opt-letter">A</div><div class="opt-text">Mostly paper, notebooks, or someone's memory</div></div>
+            <div class="quiz-option" data-q="1" data-score="2" onclick="selectOption(this)"><div class="opt-letter">B</div><div class="opt-text">Spreadsheets and basic software, but separate for each team</div></div>
+            <div class="quiz-option" data-q="1" data-score="3" onclick="selectOption(this)"><div class="opt-letter">C</div><div class="opt-text">Digital systems that mostly connect, with some manual gaps</div></div>
+            <div class="quiz-option" data-q="1" data-score="4" onclick="selectOption(this)"><div class="opt-letter">D</div><div class="opt-text">Integrated systems with centralized data, but struggling under growth</div></div>
+          </div>
+          <div class="quiz-nav"><div></div><button class="quiz-btn-next" id="next-1" onclick="nextStep(1)">Next →</button></div>
+        </div>
+
+        <div class="quiz-step" id="q2">
+          <div class="quiz-q-num">Question 2 of 8</div>
+          <div class="quiz-question">When leadership needs a status report, how long does it take to produce?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-q="2" data-score="1" onclick="selectOption(this)"><div class="opt-letter">A</div><div class="opt-text">Days — someone has to manually gather and compile everything</div></div>
+            <div class="quiz-option" data-q="2" data-score="2" onclick="selectOption(this)"><div class="opt-letter">B</div><div class="opt-text">A few hours — pulling from multiple spreadsheets or systems</div></div>
+            <div class="quiz-option" data-q="2" data-score="3" onclick="selectOption(this)"><div class="opt-letter">C</div><div class="opt-text">Under an hour — dashboards exist but need some manual updates</div></div>
+            <div class="quiz-option" data-q="2" data-score="4" onclick="selectOption(this)"><div class="opt-letter">D</div><div class="opt-text">Real-time — but dashboards don't yet drive decisions reliably</div></div>
+          </div>
+          <div class="quiz-nav"><button class="quiz-btn-back" onclick="prevStep(2)">← Back</button><button class="quiz-btn-next" id="next-2" onclick="nextStep(2)">Next →</button></div>
+        </div>
+
+        <div class="quiz-step" id="q3">
+          <div class="quiz-q-num">Question 3 of 8</div>
+          <div class="quiz-question">How do your different software tools and systems communicate with each other?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-q="3" data-score="1" onclick="selectOption(this)"><div class="opt-letter">A</div><div class="opt-text">They don't — we don't really have digital tools yet</div></div>
+            <div class="quiz-option" data-q="3" data-score="2" onclick="selectOption(this)"><div class="opt-letter">B</div><div class="opt-text">They don't — staff manually copy data between them daily</div></div>
+            <div class="quiz-option" data-q="3" data-score="3" onclick="selectOption(this)"><div class="opt-letter">C</div><div class="opt-text">Some connect automatically, others still require manual work</div></div>
+            <div class="quiz-option" data-q="3" data-score="4" onclick="selectOption(this)"><div class="opt-letter">D</div><div class="opt-text">Most are integrated, but architecture struggles as we scale</div></div>
+          </div>
+          <div class="quiz-nav"><button class="quiz-btn-back" onclick="prevStep(3)">← Back</button><button class="quiz-btn-next" id="next-3" onclick="nextStep(3)">Next →</button></div>
+        </div>
+
+        <div class="quiz-step" id="q4">
+          <div class="quiz-q-num">Question 4 of 8</div>
+          <div class="quiz-question">How does your team make important operational decisions?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-q="4" data-score="1" onclick="selectOption(this)"><div class="opt-letter">A</div><div class="opt-text">Mostly experience and gut feel — we don't have much data</div></div>
+            <div class="quiz-option" data-q="4" data-score="2" onclick="selectOption(this)"><div class="opt-letter">B</div><div class="opt-text">We have data but it's hard to access, so gut feel still dominates</div></div>
+            <div class="quiz-option" data-q="4" data-score="3" onclick="selectOption(this)"><div class="opt-letter">C</div><div class="opt-text">We use data regularly but don't yet predict or model outcomes</div></div>
+            <div class="quiz-option" data-q="4" data-score="4" onclick="selectOption(this)"><div class="opt-letter">D</div><div class="opt-text">Data-driven, but our models and insights don't scale with us</div></div>
+          </div>
+          <div class="quiz-nav"><button class="quiz-btn-back" onclick="prevStep(4)">← Back</button><button class="quiz-btn-next" id="next-4" onclick="nextStep(4)">Next →</button></div>
+        </div>
+
+        <div class="quiz-step" id="q5">
+          <div class="quiz-q-num">Question 5 of 8</div>
+          <div class="quiz-question">What happens to operations when a key staff member leaves?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-q="5" data-score="1" onclick="selectOption(this)"><div class="opt-letter">A</div><div class="opt-text">Serious disruption — critical knowledge walks out with them</div></div>
+            <div class="quiz-option" data-q="5" data-score="2" onclick="selectOption(this)"><div class="opt-letter">B</div><div class="opt-text">Moderate disruption — some things documented, not all</div></div>
+            <div class="quiz-option" data-q="5" data-score="3" onclick="selectOption(this)"><div class="opt-letter">C</div><div class="opt-text">Minor disruption — most processes are in systems</div></div>
+            <div class="quiz-option" data-q="5" data-score="4" onclick="selectOption(this)"><div class="opt-letter">D</div><div class="opt-text">Minimal disruption — but scaling creates new knowledge gaps</div></div>
+          </div>
+          <div class="quiz-nav"><button class="quiz-btn-back" onclick="prevStep(5)">← Back</button><button class="quiz-btn-next" id="next-5" onclick="nextStep(5)">Next →</button></div>
+        </div>
+
+        <div class="quiz-step" id="q6">
+          <div class="quiz-q-num">Question 6 of 8</div>
+          <div class="quiz-question">How would you describe your organization's relationship with AI?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-q="6" data-score="1" onclick="selectOption(this)"><div class="opt-letter">A</div><div class="opt-text">Not relevant yet — we have more basic digital needs first</div></div>
+            <div class="quiz-option" data-q="6" data-score="2" onclick="selectOption(this)"><div class="opt-letter">B</div><div class="opt-text">Curious but unsure if we're ready or where to start</div></div>
+            <div class="quiz-option" data-q="6" data-score="3" onclick="selectOption(this)"><div class="opt-letter">C</div><div class="opt-text">Ready to build something real, with proper validation first</div></div>
+            <div class="quiz-option" data-q="6" data-score="4" onclick="selectOption(this)"><div class="opt-letter">D</div><div class="opt-text">We have AI systems but they need to mature as we grow</div></div>
+          </div>
+          <div class="quiz-nav"><button class="quiz-btn-back" onclick="prevStep(6)">← Back</button><button class="quiz-btn-next" id="next-6" onclick="nextStep(6)">Next →</button></div>
+        </div>
+
+        <div class="quiz-step" id="q7">
+          <div class="quiz-q-num">Question 7 of 8</div>
+          <div class="quiz-question">What best describes your organization's growth situation right now?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-q="7" data-score="1" onclick="selectOption(this)"><div class="opt-letter">A</div><div class="opt-text">Early stage — building the foundation before we can grow</div></div>
+            <div class="quiz-option" data-q="7" data-score="2" onclick="selectOption(this)"><div class="opt-letter">B</div><div class="opt-text">Steady — but fragmented systems slow us down</div></div>
+            <div class="quiz-option" data-q="7" data-score="3" onclick="selectOption(this)"><div class="opt-letter">C</div><div class="opt-text">Growing well — but decisions lag behind operations</div></div>
+            <div class="quiz-option" data-q="7" data-score="4" onclick="selectOption(this)"><div class="opt-letter">D</div><div class="opt-text">Scaling fast — and systems are starting to crack</div></div>
+          </div>
+          <div class="quiz-nav"><button class="quiz-btn-back" onclick="prevStep(7)">← Back</button><button class="quiz-btn-next" id="next-7" onclick="nextStep(7)">Next →</button></div>
+        </div>
+
+        <div class="quiz-step" id="q8">
+          <div class="quiz-q-num">Question 8 of 8</div>
+          <div class="quiz-question">What is the single biggest operational problem your organization faces today?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" data-q="8" data-score="1" onclick="selectOption(this)"><div class="opt-letter">A</div><div class="opt-text">We don't have the digital systems we need to operate efficiently</div></div>
+            <div class="quiz-option" data-q="8" data-score="2" onclick="selectOption(this)"><div class="opt-letter">B</div><div class="opt-text">Our tools don't talk to each other and data is duplicated everywhere</div></div>
+            <div class="quiz-option" data-q="8" data-score="3" onclick="selectOption(this)"><div class="opt-letter">C</div><div class="opt-text">We have data but can't turn it into decisions we trust</div></div>
+            <div class="quiz-option" data-q="8" data-score="4" onclick="selectOption(this)"><div class="opt-letter">D</div><div class="opt-text">Our systems can't keep up with how fast we're growing</div></div>
+          </div>
+          <div class="quiz-nav"><button class="quiz-btn-back" onclick="prevStep(8)">← Back</button><button class="quiz-btn-next" id="next-8" onclick="showResult()">See my result →</button></div>
+        </div>
+
+        <div class="quiz-result" id="quiz-result"></div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- PROGRESS VISUAL -->
-  <section class="progress-section">
-    <div class="progress-label">The journey — click any stage</div>
-    <div class="progress-track">
-      <div class="progress-node active" data-stage="1" onclick="selectStage(1)">
-        <div class="node-circle">01</div>
-        <div class="node-label">Fragmented</div>
+    <!-- 08 GLOSSARY -->
+    <section id="glossary">
+      <div class="sec-eyebrow">08 — Glossary</div>
+      <h2 class="sec-title">Terms we use.<br><em>What we mean by them.</em></h2>
+      <p class="sec-lead">Plain definitions for the terms that appear throughout this framework. No jargon left unexplained.</p>
+
+      <div class="glossary-grid">
+        <div class="gloss-item">
+          <div class="gloss-term">Digital maturity</div>
+          <div class="gloss-def">How effectively an organization uses digital systems, data, and technology to operate and make decisions. Not about the sophistication of tools — about how deeply embedded they are in how the organization actually works.</div>
+        </div>
+        <div class="gloss-item">
+          <div class="gloss-term">Integration layer</div>
+          <div class="gloss-def">The infrastructure that connects separate systems so they share data automatically — eliminating manual data movement between tools and creating a single source of truth.</div>
+        </div>
+        <div class="gloss-item">
+          <div class="gloss-term">Workflow automation</div>
+          <div class="gloss-def">The replacement of manual, human-driven processes (approvals, routing, escalations) with system-driven processes that execute automatically based on defined rules — without human intervention at every step.</div>
+        </div>
+        <div class="gloss-item">
+          <div class="gloss-term">Data governance</div>
+          <div class="gloss-def">The policies, standards, and responsibilities that ensure data is accurate, consistent, secure, and used appropriately across an organization. Not a technology — an organizational practice.</div>
+        </div>
+        <div class="gloss-item">
+          <div class="gloss-term">Predictive model</div>
+          <div class="gloss-def">A statistical or machine learning system trained on historical data to forecast future outcomes — such as loan default probability, beneficiary dropout risk, or demand for a service.</div>
+        </div>
+        <div class="gloss-item">
+          <div class="gloss-term">AI validation</div>
+          <div class="gloss-def">The process of testing whether an AI idea will actually deliver value in a specific organizational context — using real data and real users — before committing full build resources. ZFutures does this for every AI engagement.</div>
+        </div>
+        <div class="gloss-item">
+          <div class="gloss-term">Agentic AI</div>
+          <div class="gloss-def">AI systems that complete complex, multi-step tasks autonomously within defined parameters — without requiring human instruction at every step. More capable than simple automation, but requires mature data infrastructure to work reliably.</div>
+        </div>
+        <div class="gloss-item">
+          <div class="gloss-term">Technical debt</div>
+          <div class="gloss-def">The accumulated cost of shortcuts, workarounds, and quick fixes made in earlier system builds — which eventually slow down development, increase maintenance costs, and limit what the system can do. ZFutures builds to minimize technical debt from the start.</div>
+        </div>
+        <div class="gloss-item">
+          <div class="gloss-term">Scalable architecture</div>
+          <div class="gloss-def">System design that anticipates growth — built to handle significantly more users, data, or transactions than currently needed, without requiring full rebuilds at each stage of expansion.</div>
+        </div>
+        <div class="gloss-item">
+          <div class="gloss-term">M&E system</div>
+          <div class="gloss-def">Monitoring and Evaluation system — the infrastructure used by development organizations and NGOs to track program indicators, measure impact, and report outcomes to donors and stakeholders.</div>
+        </div>
       </div>
-      <div class="progress-connector"></div>
-      <div class="progress-node" data-stage="2" onclick="selectStage(2)">
-        <div class="node-circle">02</div>
-        <div class="node-label">Connected</div>
-      </div>
-      <div class="progress-connector"></div>
-      <div class="progress-node" data-stage="3" onclick="selectStage(3)">
-        <div class="node-circle">03</div>
-        <div class="node-label">Intelligent</div>
-      </div>
-      <div class="progress-connector"></div>
-      <div class="progress-node" data-stage="4" onclick="selectStage(4)">
-        <div class="node-circle">04</div>
-        <div class="node-label">Scalable</div>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- SELF-ASSESSMENT QUIZ -->
-  <section class="quiz-section" id="quiz">
-    <div class="quiz-intro">
-      <div class="quiz-intro-eyebrow">Self-Assessment</div>
-      <h2>Find out which stage<br>your organization is at <em>right now.</em></h2>
-      <p>8 questions. 2 minutes. A clear picture of where you are and exactly what ZFutures would build for you next.</p>
-    </div>
+    <!-- CTA -->
+    <section class="cta-section">
+      <h2>Ready to find out what<br>ZFutures would <em>build for you?</em></h2>
+      <p>Every engagement starts with one honest conversation. Tell us where you are. We will tell you exactly what we would build and how we would approach it.</p>
+      <a href="https://zfutures.vercel.app/#contact" class="btn-primary">Start a conversation →</a>
+    </section>
 
-    <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quiz-progress"></div></div>
+  </main>
+</div>
+</div>
 
-    <!-- Q1 -->
-    <div class="quiz-step active" id="q1">
-      <div class="quiz-q-num">Question 1 of 8</div>
-      <div class="quiz-question">How does your organization currently store and manage operational data?</div>
-      <div class="quiz-options">
-        <div class="quiz-option" data-q="1" data-score="1" onclick="selectOption(this)"><div class="opt-letter">A</div><div class="opt-text">Mostly paper, notebooks, or someone's memory</div></div>
-        <div class="quiz-option" data-q="1" data-score="2" onclick="selectOption(this)"><div class="opt-letter">B</div><div class="opt-text">Spreadsheets and basic software, but separate for each team</div></div>
-        <div class="quiz-option" data-q="1" data-score="3" onclick="selectOption(this)"><div class="opt-letter">C</div><div class="opt-text">Digital systems that mostly connect, with some manual gaps</div></div>
-        <div class="quiz-option" data-q="1" data-score="4" onclick="selectOption(this)"><div class="opt-letter">D</div><div class="opt-text">Integrated systems with centralized data, but struggling under growth</div></div>
-      </div>
-      <div class="quiz-nav"><div></div><button class="quiz-btn-next" id="next-1" onclick="nextStep(1)">Next →</button></div>
-    </div>
-
-    <!-- Q2 -->
-    <div class="quiz-step" id="q2">
-      <div class="quiz-q-num">Question 2 of 8</div>
-      <div class="quiz-question">When your leadership needs a status report, how long does it take to produce?</div>
-      <div class="quiz-options">
-        <div class="quiz-option" data-q="2" data-score="1" onclick="selectOption(this)"><div class="opt-letter">A</div><div class="opt-text">Days — someone has to manually gather and compile everything</div></div>
-        <div class="quiz-option" data-q="2" data-score="2" onclick="selectOption(this)"><div class="opt-letter">B</div><div class="opt-text">A few hours — pulling from multiple spreadsheets or systems</div></div>
-        <div class="quiz-option" data-q="2" data-score="3" onclick="selectOption(this)"><div class="opt-letter">C</div><div class="opt-text">Under an hour — dashboards exist but need some manual updates</div></div>
-        <div class="quiz-option" data-q="2" data-score="4" onclick="selectOption(this)"><div class="opt-letter">D</div><div class="opt-text">Real-time — but the dashboards don't yet drive decisions reliably</div></div>
-      </div>
-      <div class="quiz-nav"><button class="quiz-btn-back" onclick="prevStep(2)">← Back</button><button class="quiz-btn-next" id="next-2" onclick="nextStep(2)">Next →</button></div>
-    </div>
-
-    <!-- Q3 -->
-    <div class="quiz-step" id="q3">
-      <div class="quiz-q-num">Question 3 of 8</div>
-      <div class="quiz-question">How do your different software tools and systems communicate with each other?</div>
-      <div class="quiz-options">
-        <div class="quiz-option" data-q="3" data-score="1" onclick="selectOption(this)"><div class="opt-letter">A</div><div class="opt-text">They don't — we don't really have digital tools yet</div></div>
-        <div class="quiz-option" data-q="3" data-score="2" onclick="selectOption(this)"><div class="opt-letter">B</div><div class="opt-text">They don't — staff manually copy data between them</div></div>
-        <div class="quiz-option" data-q="3" data-score="3" onclick="selectOption(this)"><div class="opt-letter">C</div><div class="opt-text">Some connect automatically, others still require manual work</div></div>
-        <div class="quiz-option" data-q="3" data-score="4" onclick="selectOption(this)"><div class="opt-letter">D</div><div class="opt-text">Most are integrated, but the architecture struggles as we scale</div></div>
-      </div>
-      <div class="quiz-nav"><button class="quiz-btn-back" onclick="prevStep(3)">← Back</button><button class="quiz-btn-next" id="next-3" onclick="nextStep(3)">Next →</button></div>
-    </div>
-
-    <!-- Q4 -->
-    <div class="quiz-step" id="q4">
-      <div class="quiz-q-num">Question 4 of 8</div>
-      <div class="quiz-question">How does your team make important operational decisions?</div>
-      <div class="quiz-options">
-        <div class="quiz-option" data-q="4" data-score="1" onclick="selectOption(this)"><div class="opt-letter">A</div><div class="opt-text">Mostly experience and gut feel — we don't have much data to work with</div></div>
-        <div class="quiz-option" data-q="4" data-score="2" onclick="selectOption(this)"><div class="opt-letter">B</div><div class="opt-text">We have data but it's hard to access, so gut feel still dominates</div></div>
-        <div class="quiz-option" data-q="4" data-score="3" onclick="selectOption(this)"><div class="opt-letter">C</div><div class="opt-text">We use data regularly but don't yet predict or model outcomes</div></div>
-        <div class="quiz-option" data-q="4" data-score="4" onclick="selectOption(this)"><div class="opt-letter">D</div><div class="opt-text">Data-driven, but our models and insights don't yet scale with us</div></div>
-      </div>
-      <div class="quiz-nav"><button class="quiz-btn-back" onclick="prevStep(4)">← Back</button><button class="quiz-btn-next" id="next-4" onclick="nextStep(4)">Next →</button></div>
-    </div>
-
-    <!-- Q5 -->
-    <div class="quiz-step" id="q5">
-      <div class="quiz-q-num">Question 5 of 8</div>
-      <div class="quiz-question">What happens to your operations when a key staff member leaves?</div>
-      <div class="quiz-options">
-        <div class="quiz-option" data-q="5" data-score="1" onclick="selectOption(this)"><div class="opt-letter">A</div><div class="opt-text">Serious disruption — critical knowledge walks out with them</div></div>
-        <div class="quiz-option" data-q="5" data-score="2" onclick="selectOption(this)"><div class="opt-letter">B</div><div class="opt-text">Moderate disruption — some things are documented but not all</div></div>
-        <div class="quiz-option" data-q="5" data-score="3" onclick="selectOption(this)"><div class="opt-letter">C</div><div class="opt-text">Minor disruption — most processes are documented and in systems</div></div>
-        <div class="quiz-option" data-q="5" data-score="4" onclick="selectOption(this)"><div class="opt-letter">D</div><div class="opt-text">Minimal disruption — but scaling to new teams creates knowledge gaps</div></div>
-      </div>
-      <div class="quiz-nav"><button class="quiz-btn-back" onclick="prevStep(5)">← Back</button><button class="quiz-btn-next" id="next-5" onclick="nextStep(5)">Next →</button></div>
-    </div>
-
-    <!-- Q6 -->
-    <div class="quiz-step" id="q6">
-      <div class="quiz-q-num">Question 6 of 8</div>
-      <div class="quiz-question">How would you describe your organization's relationship with AI?</div>
-      <div class="quiz-options">
-        <div class="quiz-option" data-q="6" data-score="1" onclick="selectOption(this)"><div class="opt-letter">A</div><div class="opt-text">We haven't thought about it — more basic digital needs come first</div></div>
-        <div class="quiz-option" data-q="6" data-score="2" onclick="selectOption(this)"><div class="opt-letter">B</div><div class="opt-text">We're curious but don't know if we're ready or where to start</div></div>
-        <div class="quiz-option" data-q="6" data-score="3" onclick="selectOption(this)"><div class="opt-letter">C</div><div class="opt-text">We've explored it and want to build something real, with proper validation</div></div>
-        <div class="quiz-option" data-q="6" data-score="4" onclick="selectOption(this)"><div class="opt-letter">D</div><div class="opt-text">We have AI systems but they need to mature as we grow</div></div>
-      </div>
-      <div class="quiz-nav"><button class="quiz-btn-back" onclick="prevStep(6)">← Back</button><button class="quiz-btn-next" id="next-6" onclick="nextStep(6)">Next →</button></div>
-    </div>
-
-    <!-- Q7 -->
-    <div class="quiz-step" id="q7">
-      <div class="quiz-q-num">Question 7 of 8</div>
-      <div class="quiz-question">What best describes your organization's growth situation right now?</div>
-      <div class="quiz-options">
-        <div class="quiz-option" data-q="7" data-score="1" onclick="selectOption(this)"><div class="opt-letter">A</div><div class="opt-text">Early stage — building the foundation before we can grow</div></div>
-        <div class="quiz-option" data-q="7" data-score="2" onclick="selectOption(this)"><div class="opt-letter">B</div><div class="opt-text">Steady — but fragmented systems slow us down</div></div>
-        <div class="quiz-option" data-q="7" data-score="3" onclick="selectOption(this)"><div class="opt-letter">C</div><div class="opt-text">Growing well — but decisions lag behind the speed of operations</div></div>
-        <div class="quiz-option" data-q="7" data-score="4" onclick="selectOption(this)"><div class="opt-letter">D</div><div class="opt-text">Scaling fast — and our systems are starting to crack under the pressure</div></div>
-      </div>
-      <div class="quiz-nav"><button class="quiz-btn-back" onclick="prevStep(7)">← Back</button><button class="quiz-btn-next" id="next-7" onclick="nextStep(7)">Next →</button></div>
-    </div>
-
-    <!-- Q8 -->
-    <div class="quiz-step" id="q8">
-      <div class="quiz-q-num">Question 8 of 8</div>
-      <div class="quiz-question">What is the single biggest operational problem your organization faces today?</div>
-      <div class="quiz-options">
-        <div class="quiz-option" data-q="8" data-score="1" onclick="selectOption(this)"><div class="opt-letter">A</div><div class="opt-text">We don't have the digital systems we need to operate efficiently</div></div>
-        <div class="quiz-option" data-q="8" data-score="2" onclick="selectOption(this)"><div class="opt-letter">B</div><div class="opt-text">Our tools don't talk to each other and data is duplicated everywhere</div></div>
-        <div class="quiz-option" data-q="8" data-score="3" onclick="selectOption(this)"><div class="opt-letter">C</div><div class="opt-text">We have data but can't turn it into decisions we trust</div></div>
-        <div class="quiz-option" data-q="8" data-score="4" onclick="selectOption(this)"><div class="opt-letter">D</div><div class="opt-text">Our systems can't keep up with how fast we're growing</div></div>
-      </div>
-      <div class="quiz-nav"><button class="quiz-btn-back" onclick="prevStep(8)">← Back</button><button class="quiz-btn-next" id="next-8" onclick="showResult()">See my result →</button></div>
-    </div>
-
-    <!-- RESULT -->
-    <div class="quiz-result" id="quiz-result"></div>
-  </section>
-
-  <!-- CTA -->
-  <section class="cta-section">
-    <h2>Not sure which stage<br>you are at? <em>Tell us.</em></h2>
-    <p>Most organizations sit between two stages. Describe your situation in plain language and we will tell you exactly what we would build for you.</p>
-    <a href="https://zfutures.vercel.app/#contact" class="cta-btn">Start a conversation →</a>
-  </section>
-
+<!-- FOOTER -->
+<div class="wrap">
   <footer>
     <div class="footer-brand">Z<span>Futures</span> — Intelligence & Systems</div>
-    <p>© ZFutures. Built for Africa.</p>
+    <p>© ZFutures. Built for Africa. Methodology v1.0</p>
   </footer>
 </div>
 
 <script>
-  const answers = {};
-  const totalQ = 8;
+const answers = {};
+const totalQ = 8;
 
-  function selectOption(el) {
-    const q = el.dataset.q;
-    document.querySelectorAll('.quiz-option[data-q="' + q + '"]').forEach(o => o.classList.remove('selected'));
-    el.classList.add('selected');
-    answers[q] = parseInt(el.dataset.score);
-    const btn = document.getElementById('next-' + q);
-    if (btn) { btn.classList.add('enabled'); }
+function selectOption(el) {
+  const q = el.dataset.q;
+  document.querySelectorAll('.quiz-option[data-q="'+q+'"]').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  answers[q] = parseInt(el.dataset.score);
+  const btn = document.getElementById('next-'+q);
+  if (btn) btn.classList.add('enabled');
+}
+
+function nextStep(current) {
+  if (!answers[current]) return;
+  document.getElementById('q'+current).classList.remove('active');
+  const next = current + 1;
+  if (next <= totalQ) document.getElementById('q'+next).classList.add('active');
+  updateProgress(next);
+}
+
+function prevStep(current) {
+  document.getElementById('q'+current).classList.remove('active');
+  document.getElementById('q'+(current-1)).classList.add('active');
+  updateProgress(current-1);
+}
+
+function updateProgress(step) {
+  document.getElementById('quiz-progress').style.width = Math.round(((step-1)/totalQ)*100)+'%';
+}
+
+function showResult() {
+  if (!answers[8]) return;
+  const total = Object.values(answers).reduce((a,b)=>a+b,0);
+  const avg = total / totalQ;
+  let stage, color, name, tagline, desc, priority, next_build, section;
+
+  if (avg <= 1.6) {
+    stage=1; color='var(--s1)'; name='Fragmented';
+    tagline='Your foundation needs to be built first.';
+    desc='Your organization is operating largely on manual processes, paper, or informal systems. This is the clearest starting point — and one ZFutures has worked from many times across Africa. You do not need to figure out what to build first. We map that in the first two weeks.';
+    priority='Digitize your most critical operational processes before anything else.';
+    next_build='Core operational systems, cloud infrastructure, field data collection, and basic reporting.';
+    section='stage-1';
+  } else if (avg <= 2.4) {
+    stage=2; color='var(--s2)'; name='Connected';
+    tagline='Your tools exist. Now make them work together.';
+    desc='You have digital tools, but they operate in silos. Data moves manually between systems, reports take hours to assemble, and nobody ever has the full picture at once. The integration layer is what you need — and it is exactly what ZFutures builds at this stage.';
+    priority='Connect your existing systems and eliminate duplicate data entry.';
+    next_build='System integration layer, automated workflows, and real-time operational dashboards.';
+    section='stage-2';
+  } else if (avg <= 3.3) {
+    stage=3; color='var(--s3)'; name='Intelligent';
+    tagline='Your data is ready to work harder.';
+    desc='Your systems are largely connected, but data is not yet driving decisions the way it should. You probably have more useful data than you realize — the problem is the infrastructure to make sense of it. ZFutures builds predictive models, unified analytics platforms, and AI systems that are tested before they are built.';
+    priority='Build the intelligence layer that turns your data into decisions.';
+    next_build='Predictive models, unified analytics platform, and validated AI integration.';
+    section='stage-3';
+  } else {
+    stage=4; color='var(--s4)'; name='Scalable';
+    tagline='Your systems need to grow as fast as you do.';
+    desc='You have built something real — and now it is straining under your own growth. The systems that got you here cannot take you to the next stage without a redesign. ZFutures builds scalable architecture in stages so you keep running while we strengthen the foundation beneath you.';
+    priority='Redesign your architecture to hold at 10x your current scale.';
+    next_build='Scalable architecture redesign, transformation roadmap, and capability building.';
+    section='stage-4';
   }
 
-  function nextStep(current) {
-    if (!answers[current]) return;
-    document.getElementById('q' + current).classList.remove('active');
-    const next = current + 1;
-    if (next <= totalQ) {
-      document.getElementById('q' + next).classList.add('active');
-    }
-    updateProgress(next);
-  }
+  document.getElementById('quiz-progress').style.width='100%';
+  document.querySelectorAll('.quiz-step').forEach(s=>s.classList.remove('active'));
+  const scorePercent = Math.round(((avg-1)/3)*100);
 
-  function prevStep(current) {
-    document.getElementById('q' + current).classList.remove('active');
-    document.getElementById('q' + (current - 1)).classList.add('active');
-    updateProgress(current - 1);
-  }
+  document.getElementById('quiz-result').innerHTML = `
+    <div class="result-badge" style="color:${color};border-color:${color};background:rgba(255,255,255,.03)">Stage ${stage} — ${name}</div>
+    <h3 class="result-h">${tagline}</h3>
+    <p class="result-desc">${desc}</p>
+    <div class="score-bar-wrap">
+      <div class="score-bar-labels"><span>Fragmented</span><span>Scalable</span></div>
+      <div class="score-bar"><div class="score-bar-fill" id="score-fill" style="width:0%;background:${color}"></div></div>
+    </div>
+    <div class="result-cards">
+      <div class="result-card"><div class="rc-label">Your immediate priority</div><div class="rc-val">${priority}</div></div>
+      <div class="result-card"><div class="rc-label">What ZFutures builds next for you</div><div class="rc-val">${next_build}</div></div>
+    </div>
+    <div class="result-actions">
+      <a href="https://zfutures.vercel.app/#contact" class="btn-primary">Talk to ZFutures about this →</a>
+      <button class="btn-secondary" onclick="document.getElementById('${section}').scrollIntoView({behavior:'smooth'})">Read Stage ${stage} in detail</button>
+      <button class="btn-secondary" onclick="resetQuiz()">Retake</button>
+    </div>
+  `;
+  document.getElementById('quiz-result').classList.add('active');
+  document.getElementById('quiz-result').scrollIntoView({behavior:'smooth',block:'start'});
+  setTimeout(()=>{
+    const fill = document.getElementById('score-fill');
+    if(fill) fill.style.width = scorePercent+'%';
+  }, 400);
+}
 
-  function updateProgress(step) {
-    const pct = Math.round(((step - 1) / totalQ) * 100);
-    document.getElementById('quiz-progress').style.width = pct + '%';
-  }
+function resetQuiz() {
+  Object.keys(answers).forEach(k=>delete answers[k]);
+  document.querySelectorAll('.quiz-option').forEach(o=>o.classList.remove('selected'));
+  document.querySelectorAll('.quiz-btn-next').forEach(b=>b.classList.remove('enabled'));
+  document.getElementById('quiz-result').classList.remove('active');
+  document.getElementById('quiz-result').innerHTML='';
+  document.getElementById('quiz-progress').style.width='0%';
+  document.querySelectorAll('.quiz-step').forEach(s=>s.classList.remove('active'));
+  document.getElementById('q1').classList.add('active');
+  document.getElementById('assessment').scrollIntoView({behavior:'smooth',block:'start'});
+}
 
-  function showResult() {
-    if (!answers[8]) return;
-    const total = Object.values(answers).reduce((a, b) => a + b, 0);
-    const avg = total / totalQ;
-
-    let stage, color, name, tagline, desc, priority, next_build;
-    if (avg <= 1.6) {
-      stage = 1; color = 'var(--stage1)'; name = 'Fragmented';
-      tagline = 'Your foundation needs to be built.';
-      desc = 'Your organization is operating largely on manual processes, paper, or informal systems. The good news: this is the clearest starting point. ZFutures has built digital foundations for organizations exactly like yours across Africa. You do not need to figure out what to build first — we will map that for you.';
-      priority = 'Build your first integrated digital systems before anything else.';
-      next_build = 'Operational digitization, workflow automation, and cloud infrastructure setup.';
-    } else if (avg <= 2.4) {
-      stage = 2; color = 'var(--stage2)'; name = 'Connected';
-      tagline = 'Your tools exist. Now make them work together.';
-      desc = 'You have digital tools, but they operate in silos. Data moves manually between systems, reports are assembled by hand, and your team cannot get a full picture without significant effort. The integration layer is what you need — and it is exactly what ZFutures builds at this stage.';
-      priority = 'Integrate your existing systems and eliminate duplicate data entry.';
-      next_build = 'System integration layer, automated workflows, and real-time operational dashboards.';
-    } else if (avg <= 3.3) {
-      stage = 3; color = 'var(--stage3)'; name = 'Intelligent';
-      tagline = 'Your data is ready to work harder.';
-      desc = 'Your systems are largely connected, but data is not yet driving decisions the way it should. You probably have more useful data than you realize — the problem is the infrastructure to make sense of it. ZFutures builds predictive models, unified analytics platforms, and AI systems that are tested before they are built.';
-      priority = 'Build the intelligence infrastructure that turns your data into real decisions.';
-      next_build = 'Predictive analytics, unified data platform, and validated AI integration.';
-    } else {
-      stage = 4; color = 'var(--stage4)'; name = 'Scalable';
-      tagline = 'Your systems need to grow as fast as you do.';
-      desc = 'You have built something real — and now it is straining under the pressure of your own growth. The systems that got you here cannot take you to the next stage without a redesign. ZFutures builds scalable architecture in stages so you keep running while we strengthen the foundation beneath you.';
-      priority = 'Redesign your operational architecture to hold at 10x your current scale.';
-      next_build = 'Scalable architecture redesign, transformation roadmap, and capability building.';
-    }
-
-    document.getElementById('quiz-progress').style.width = '100%';
-    document.querySelectorAll('.quiz-step').forEach(s => s.classList.remove('active'));
-
-    const scorePercent = Math.round(((avg - 1) / 3) * 100);
-
-    document.getElementById('quiz-result').innerHTML = `
-      <div class="result-stage-badge" style="color:${color}; border-color:${color}; background: rgba(255,255,255,0.03)">
-        Stage ${stage} — ${name}
-      </div>
-      <h2 class="result-title">${tagline}</h2>
-      <p class="result-desc">${desc}</p>
-      <div class="score-bar-wrap">
-        <div class="score-bar-label"><span>Fragmented</span><span>Scalable</span></div>
-        <div class="score-bar"><div class="score-bar-fill" id="score-fill" style="width:0%; background:${color}"></div></div>
-      </div>
-      <div class="result-grid">
-        <div class="result-card">
-          <div class="result-card-label">Your immediate priority</div>
-          <div class="result-card-content">${priority}</div>
-        </div>
-        <div class="result-card">
-          <div class="result-card-label">What ZFutures builds next for you</div>
-          <div class="result-card-content">${next_build}</div>
-        </div>
-      </div>
-      <div class="result-actions">
-        <a href="https://zfutures.vercel.app/#contact" class="result-btn-primary">Talk to ZFutures about this →</a>
-        <button class="result-btn-secondary" onclick="resetQuiz()">Retake assessment</button>
-      </div>
-    `;
-    document.getElementById('quiz-result').classList.add('active');
-    document.getElementById('quiz-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    setTimeout(() => {
-      const fill = document.getElementById('score-fill');
-      if (fill) fill.style.width = scorePercent + '%';
-    }, 300);
-  }
-
-  function resetQuiz() {
-    Object.keys(answers).forEach(k => delete answers[k]);
-    document.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
-    document.querySelectorAll('.quiz-btn-next').forEach(b => b.classList.remove('enabled'));
-    document.getElementById('quiz-result').classList.remove('active');
-    document.getElementById('quiz-result').innerHTML = '';
-    document.getElementById('quiz-progress').style.width = '0%';
-    document.querySelectorAll('.quiz-step').forEach(s => s.classList.remove('active'));
-    document.getElementById('q1').classList.add('active');
-    document.getElementById('quiz').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
-  function selectStage(n) {
-    document.querySelectorAll('.overview-cell').forEach(c => c.classList.remove('active'));
-    document.querySelectorAll('.stage-detail').forEach(d => d.classList.remove('visible'));
-    document.querySelectorAll('.stage-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.progress-node').forEach(p => p.classList.remove('active'));
-
-    document.querySelector('.overview-cell[data-stage="' + n + '"]').classList.add('active');
-    document.getElementById('detail-' + n).classList.add('visible');
-    document.querySelector('.progress-node[data-stage="' + n + '"]').classList.add('active');
-
-    document.getElementById('detail-' + n).scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
+// Sidebar active state on scroll
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.sidebar-nav a');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 120) current = s.id;
+  });
+  navLinks.forEach(a => {
+    a.classList.remove('active');
+    if (a.getAttribute('href') === '#'+current) a.classList.add('active');
+  });
+});
 </script>
 </body>
 </html>
